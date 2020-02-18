@@ -1,0 +1,96 @@
+@import '../../default-styles/colours.scss';
+
+.info-board {
+	position: absolute;
+	background-color: $info-board-background;
+	color: $info-board-text-colour;
+	opacity: 0.9;
+	z-index: 10000;
+	margin-top: 5%;
+
+	table {
+		width: 80%;
+		margin: 0 4em;
+		margin-bottom: 1em;
+
+		td {
+			text-align: center;
+			padding: 0.6em;
+		}
+
+		.title {
+			color: $info-board-background;
+			background-color: $info-board-text-colour;
+		}
+	}
+
+	.game-over-area {
+		margin: 2em;
+		text-align: center;
+
+		.game-over-title {
+			font-size: 1.6em;
+		}
+
+		.game-over-text {
+			margin-top: 2em;
+		}
+	}
+
+	.info-board-header {
+		text-align: center;
+		font-size: 1.8em;
+		margin-top: 1em;
+
+		.header-text {
+			margin: 0 1em;
+		}
+
+		img {
+			height: 1em;
+			width: 1em;
+		}
+	}
+
+	.info-board-instructions {
+		margin: 0.5em;
+		font-size: 0.8em;
+
+		li {
+			margin-bottom: 10px;
+		}
+	}
+
+	.button-area {
+		margin-bottom: 2em;
+		text-align: center;
+
+		button.disabled {
+			background-color: $info-board-disabled-colour;
+		}
+
+		button.disabled:hover {
+			color: $info-board-disabled-hover;
+		}
+	}
+}
+
+@media (max-width: 600px) {
+	.info-board {
+		font-size: 0.8em;
+
+		.button-area {
+			left: 20%;
+		}
+	}
+}
+
+@media (max-width: 500px) {
+	.info-board {
+		font-size: 0.5em;
+
+		.button-area {
+			left: 20%;
+		}
+	}
+}
