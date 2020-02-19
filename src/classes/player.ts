@@ -4,7 +4,13 @@ import DirectionEnum from './enums/direction-enum';
 import PlayerResultEnum from './enums/player-result-enum';
 import SpriteTypeEnum from './enums/sprite-type-enum';
 
-import player1 from '../images/player1.png';
+import playerRightStood from '../images/player-right-stood.png';
+import playerRight from '../images/player-right.png';
+import playerLeftStood from '../images/player-left-stood.png';
+import playerLeft from '../images/player-left.png';
+import playerUp1 from '../images/player-up-1.png';
+import playerUp2 from '../images/player-up-2.png';
+import playerUp3 from '../images/player-up-3.png';
 
 export default class Player implements IPlayer {
 	public key: string;
@@ -20,7 +26,16 @@ export default class Player implements IPlayer {
 	public isFalling: boolean;
 
 	private images = [
-		[player1]
+		[],
+		[playerUp1, playerUp2, playerUp1, playerUp3],
+		[],
+		[playerRightStood, playerRight],
+		[],
+		[playerUp1, playerUp2, playerUp1, playerUp3],
+		[],
+		[playerLeftStood, playerLeft],
+		[],
+		[playerRightStood]
 	]
 	private readonly DEFAULT_Z_INDEX: number = 5000;
 	private imageIteration: number = 0;
@@ -33,7 +48,7 @@ export default class Player implements IPlayer {
 		this.height = config.height;
 		this.width = config.width;
 		this.zIndex = this.DEFAULT_Z_INDEX;
-		this.direction = DirectionEnum.STAND;
+		this.direction = DirectionEnum.RIGHT;
 		this.image = this.images[this.direction][this.imageIteration]
 		this.score = 0;
 		this.isFalling = false;
@@ -44,6 +59,11 @@ export default class Player implements IPlayer {
 
 		this.x = x;
 		this.y = y
+
+		this.imageIteration ++;
+		if (this.imageIteration > this.images[this.direction].length - 1) this.imageIteration = 0;
+		this.direction = direction;
+		this.image = this.images[this.direction][this.imageIteration]
 
 		return outcome;
 	}

@@ -66,7 +66,6 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 		position: 'absolute' as 'absolute',
 		width: `100%`,
 		maxWidth: `${ this.state.containerHeight }px`,
-		marginLeft: `${ this.state.containerMargin }px`,
 	})
 
 	private styleContainer = () => ({

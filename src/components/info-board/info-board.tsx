@@ -2,8 +2,8 @@ import React from 'react';
 
 import IInfoBoardProps from './interfaces/info-board-props';
 
-import player1 from '../../images/player1.png';
-import player2 from '../../images/player2.png';
+import playerRight from '../../images/player-right.png';
+import playerLeft from '../../images/player-left.png';
 
 import './styles/info-board.scss';
 
@@ -11,9 +11,9 @@ export default class InfoBoard extends React.Component<IInfoBoardProps, {}> {
 	public render() {
 		return <div className="info-board" style={ this.styleInfoBoard() }>
 			<div className="info-board-header">
-				<img src={ player1 } alt="ship" />
+				<img src={ playerRight } alt="player" />
 				<span className="header-text">Chuckie Egg</span>
-				<img src={ player2 } alt="ship" />
+				<img src={ playerLeft } alt="player" />
 			</div>
 
 			<div className="info-board-instructions">
