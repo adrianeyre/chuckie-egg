@@ -62,7 +62,6 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 					<DrawSprite onMouseOver={ this.onMouseOver } onContextMenu={ this.onContextMenu } onClick={ this.onClick } sprite={ this.state.game.board.player } height={ this.state.spriteHeight } width={ this.state.spriteWidth } containerWidth={ this.state.containerWidth } />
 				</div>
 			</div> }
-			
 		</div>
 	}
 
@@ -161,6 +160,7 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 		const game = this.state.game
 		game.handleTimer();
 
+		if (!game.isGameInPlay) this.stopAllTimers();
 		this.setState(prev => ({ game }));
 	}
 

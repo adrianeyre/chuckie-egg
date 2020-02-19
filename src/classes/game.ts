@@ -34,8 +34,6 @@ export default class Game implements IGame {
 				return this.board.movePlayer(DirectionEnum.LEFT);
 			case PlayerResultEnum.ENTER:
 				return this.board.player.isJumping ? PlayerResultEnum.SAFE : PlayerResultEnum.START_JUMP_TIMER;
-			// case PlayerResultEnum.COLLECT_EGG:
-			// 	this.board.collectEgg(); break;
 		}
 
 		return PlayerResultEnum.SAFE;

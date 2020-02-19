@@ -34,15 +34,16 @@ export default class Board implements IBoard {
 		this.time = 999;
 	}
 
-	public movePlayer = (direction: DirectionEnum): PlayerResultEnum => {
-		const result = this.player.move(direction, this.board);
+	public movePlayer = (direction: DirectionEnum): PlayerResultEnum => this.handleResult(this.player.move(direction, this.board));
+	public jump = (): PlayerResultEnum => this.handleResult(this.player.jump(this.board));
+
+	private handleResult = (result: PlayerResultEnum): PlayerResultEnum => {
 		if (result === PlayerResultEnum.COLLECT_EGG) this.collectEgg();
 		if (result === PlayerResultEnum.COLLECT_FOOD) this.collectFood();
 
 		return result;
 	}
 
-	public jump = (): PlayerResultEnum => this.player.jump(this.board);
 	public decreaseTime = (): number => this.time -= this.DEFAULT_TIME_DECREASE;
 
 	private collectEgg = (): PlayerResultEnum => {
@@ -58,7 +59,6 @@ export default class Board implements IBoard {
 
 	private collectFood = (): PlayerResultEnum => {
 		const sprite = this.sprites.find((s: ISprite) => s.key === `sprite-${ this.player.x + 1 }-${ this.player.y + 1 }`)
-		console.log(sprite)
 		if (!sprite) return PlayerResultEnum.SAFE;
 
 		sprite.visable = false;

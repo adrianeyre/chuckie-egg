@@ -34,7 +34,7 @@ export default class Player implements IPlayer {
 	private imageIteration: number = 0;
 	private jumpIteration: number = 0;
 	private images = [
-		[],
+		[playerRightStood],
 		[playerUp1, playerUp2, playerUp1, playerUp3],
 		[],
 		[playerRightStood, playerRight],
@@ -46,8 +46,8 @@ export default class Player implements IPlayer {
 		[playerRightStood]
 	]
 	private jumpMatrix = [
-		[],
-		[[-1, -1], [-1, -1], [1, 1], [1, 1], [0, 0]],
+		[[0, -1], [0, -1], [0, 1], [0, 1], [0, 0]],
+		[[0, -1], [0, -1], [0, 1], [0, 1], [0, 0]],
 		[],
 		[[1, -1], [1, -1], [1, 1]],
 		[],
@@ -66,7 +66,7 @@ export default class Player implements IPlayer {
 		this.height = config.height;
 		this.width = config.width;
 		this.zIndex = this.DEFAULT_Z_INDEX;
-		this.direction = DirectionEnum.RIGHT;
+		this.direction = DirectionEnum.STAND;
 		this.image = this.images[this.direction][this.imageIteration]
 		this.score = 0;
 		this.lives = this.DEFAULT_LIVES;
@@ -75,6 +75,8 @@ export default class Player implements IPlayer {
 	}
 
 	public move = (direction: DirectionEnum, board: number[][]): PlayerResultEnum => {
+		if (this.isJumping) return PlayerResultEnum.SAFE;
+
 		let { x, y, outcome } = this.checkSpace(direction, board);
 
 		this.x = x;
@@ -87,19 +89,36 @@ export default class Player implements IPlayer {
 	}
 
 	public jump = (board: number[][]): PlayerResultEnum => {
+		let outcome = PlayerResultEnum.SAFE
+		if (this.isFalling) return outcome;
+
 		this.isJumping = true;
 		const matrix = this.jumpMatrix[this.direction];
-		if (matrix.length < 1) return PlayerResultEnum.SAFE;
+		if (matrix.length < 1) return outcome;
 
 		const nextMove = matrix[this.jumpIteration];
 
 		let x = this.x + nextMove[0];
 		let y = this.y + nextMove[1];
+		const lastMove = nextMove[0] === 0 && nextMove[1] === 0;
 
-		if (this.isBlock(x, y, board) || this.isLadder(x, y, board)) {
+		if (lastMove || this.isBlock(x, y, board) || this.isLadder(x, y, board)) {
 			this.isJumping = false;
 			this.jumpIteration = 0;
 			return PlayerResultEnum.STOP_JUMP_TIMER;
+		}
+
+		let blockInWay = false
+		switch (this.direction) {
+			case DirectionEnum.RIGHT:
+				blockInWay = x > board[0].length - 1 || this.blockInFrontToRight(x, y, board); break;
+			case DirectionEnum.LEFT:
+				blockInWay = x < 1 || this.blockInFrontToLeft(x, y, board); break;
+		}
+
+		if (blockInWay) {
+			this.resetDirection();
+			return this.jump(board);
 		}
 
 		this.x = x;
@@ -107,16 +126,21 @@ export default class Player implements IPlayer {
 
 		this.jumpIteration++;
 		if (this.jumpIteration > matrix.length - 1) this.jumpIteration = matrix.length - 1;
-		return PlayerResultEnum.SAFE;
+
+		if (this.isEgg(x + 1, y, board)) outcome = this.collectEgg(x + 1, y, board);
+		if (this.isFood(x + 1, y, board)) outcome = this.collectFood(x + 1, y, board);
+
+		return outcome;
 	}
 
-	private isBlock = (x: number, y: number, board: number[][]): boolean =>
-		board[y][x] === SpriteTypeEnum.FLOOR1 ||
-		board[y][x] === SpriteTypeEnum.FLOOR2;
-	
-	private isLadder = (x: number, y: number, board: number[][]): boolean =>
-		(this.direction === DirectionEnum.LEFT && board[y][x+1] === SpriteTypeEnum.LADDER2) ||
-		(this.direction === DirectionEnum.RIGHT && board[y][x-1] === SpriteTypeEnum.LADDER2);
+	private resetDirection = () => {
+		switch (this.direction) {
+			case DirectionEnum.RIGHT:
+				this.direction = DirectionEnum.LEFT; break;
+			case DirectionEnum.LEFT:
+				this.direction = DirectionEnum.RIGHT; break;
+		}
+	}
 
 	private updateImage = (direction: DirectionEnum): void => {
 		this.imageIteration ++;
@@ -156,25 +180,22 @@ export default class Player implements IPlayer {
 		return { x, y: y + 1, outcome: PlayerResultEnum.SAFE }
 	}
 
-	private checkUp = (x: number, y: number, board: number[][]): number => y > 1 && board[y - 2][x] === SpriteTypeEnum.LADDER2 ? y - 1 : y;
-	private checkDown = (x: number, y: number, board: number[][]): number => y < board.length - 2 && board[y + 1][x] === SpriteTypeEnum.LADDER2 ? y + 1 : y;
-
 	private checkRight = (x: number, y: number, board: number[][]): any => {
 		let outcome = PlayerResultEnum.SAFE;
 		if (x >= board[0].length - 1) return { x, y, outcome};
 
-		const blankSpaceBelow = board[y+1][x] === SpriteTypeEnum.BLANK;
-		const ladderSpaceBelow = board[y+1][x] === SpriteTypeEnum.LADDER2;
+		const blankSpaceBelow = this.blankSpaceBelowRight(x, y, board);
+		const ladderSpaceBelow = this.ladderSpaceBelow(x, y, board);
 		this.isFalling = blankSpaceBelow && !ladderSpaceBelow
 
-		const blockBelowRight = board[y+1][x] !== SpriteTypeEnum.BLANK;
-		const blockNextToLadder = board[y+1][x+1] !== SpriteTypeEnum.BLANK;
-		const canMoveRight = board[y+1][x] === SpriteTypeEnum.LADDER2 ? blockBelowRight && blockNextToLadder : blockBelowRight;
+		const blockBelowNotBlank = this.blockBelowNotBlank(x, y, board);
+		const blockNextToLadder = this.blockNextToLadderRight(x, y, board);
+		const canMoveRight = ladderSpaceBelow ? blockBelowNotBlank && blockNextToLadder : blockBelowNotBlank;
 		
-		const blockInfront = board[y][x+1] === SpriteTypeEnum.FLOOR1 || board[y][x+1] === SpriteTypeEnum.FLOOR2;
+		const blockInfront = this.blockInFrontToRight(x, y, board);
 
-		if (this.isEgg(x, y, board)) outcome = this.collectEgg(x, y, board);
-		if (this.isFood(x, y, board)) outcome = this.collectFood(x, y, board);
+		if (this.isEgg(x + 1, y, board)) outcome = this.collectEgg(x + 1, y, board);
+		if (this.isFood(x + 1, y, board)) outcome = this.collectFood(x + 1, y, board);
 
 		x = (canMoveRight || this.isFalling) && !blockInfront ? x + 1 : x;
 		return { x, y, outcome: this.isFalling ? PlayerResultEnum.START_FALL_TIMER : outcome }
@@ -184,15 +205,15 @@ export default class Player implements IPlayer {
 		let outcome = PlayerResultEnum.SAFE;
 		if (x < 2) return { x, y, outcome };
 
-		const blankSpaceBelow = board[y+1][x-1] === SpriteTypeEnum.BLANK;
-		const ladderSpaceBelow = board[y+1][x] === SpriteTypeEnum.LADDER2;
+		const blankSpaceBelow = this.blankSpaceBelowLeft(x, y, board)
+		const ladderSpaceBelow = this.ladderSpaceBelow(x, y, board);
 		this.isFalling = blankSpaceBelow && !ladderSpaceBelow
 
-		const blockBelowLeft = board[y+1][x] !== SpriteTypeEnum.BLANK;
-		const blockNextToLadder = board[y+1][x-2] !== SpriteTypeEnum.BLANK;
-		const canMoveRight = board[y+1][x] === SpriteTypeEnum.LADDER2 ? blockBelowLeft && blockNextToLadder : blockBelowLeft;
+		const blockBelowNotBlank = this.blockBelowNotBlank(x, y, board);
+		const blockNextToLadder = this.blockNextToLadderLeft(x, y, board);
+		const canMoveRight = ladderSpaceBelow ? blockBelowNotBlank && blockNextToLadder : blockBelowNotBlank;
 		
-		const blockInfront = board[y][x-1] === SpriteTypeEnum.FLOOR1 || board[y][x-1] === SpriteTypeEnum.FLOOR2;
+		const blockInfront = this.blockInFrontToLeft(x, y, board);
 
 		if (this.isEgg(x - 1, y, board)) outcome = this.collectEgg(x - 1, y, board);
 		if (this.isFood(x - 1, y, board)) outcome = this.collectFood(x - 1, y, board);
@@ -201,6 +222,24 @@ export default class Player implements IPlayer {
 		return { x, y, outcome: this.isFalling ? PlayerResultEnum.START_FALL_TIMER : outcome }
 	}
 
+	private isBlock = (x: number, y: number, board: number[][]): boolean =>
+		board[y][x - 1] === SpriteTypeEnum.FLOOR1 ||
+		board[y][x - 1] === SpriteTypeEnum.FLOOR2;
+	
+	private isLadder = (x: number, y: number, board: number[][]): boolean =>
+		(this.direction === DirectionEnum.LEFT && board[y][x+1] === SpriteTypeEnum.LADDER2) ||
+		(this.direction === DirectionEnum.RIGHT && board[y][x-1] === SpriteTypeEnum.LADDER2);
+
+	private checkUp = (x: number, y: number, board: number[][]): number => y > 1 && board[y - 2][x] === SpriteTypeEnum.LADDER2 ? y - 1 : y;
+	private checkDown = (x: number, y: number, board: number[][]): number => y < board.length - 2 && board[y + 1][x] === SpriteTypeEnum.LADDER2 ? y + 1 : y;
+	private blockNextToLadderLeft = (x: number, y: number, board: number[][]): boolean => board[y+1][x-2] !== SpriteTypeEnum.BLANK;
+	private blockNextToLadderRight = (x: number, y: number, board: number[][]): boolean => board[y+1][x+1] !== SpriteTypeEnum.BLANK;
+	private blockBelowNotBlank = (x: number, y: number, board: number[][]): boolean => board[y+1][x] !== SpriteTypeEnum.BLANK;
+	private ladderSpaceBelow = (x: number, y: number, board: number[][]): boolean => board[y+1][x] === SpriteTypeEnum.LADDER2;
+	private blankSpaceBelowLeft = (x: number, y: number, board: number[][]): boolean => board[y+1][x-1] === SpriteTypeEnum.BLANK;
+	private blankSpaceBelowRight = (x: number, y: number, board: number[][]): boolean => board[y+1][x] === SpriteTypeEnum.BLANK;
+	private blockInFrontToLeft = (x: number, y: number, board: number[][]): boolean => board[y][x-1] === SpriteTypeEnum.FLOOR1 || board[y][x-1] === SpriteTypeEnum.FLOOR2;
+	private blockInFrontToRight = (x: number, y: number, board: number[][]): boolean => board[y][x+1] === SpriteTypeEnum.FLOOR1 || board[y][x+1] === SpriteTypeEnum.FLOOR2;
 	private isEgg = (x: number, y: number, board: number[][]): boolean => board[y][x] === SpriteTypeEnum.EGG;
 	private isFood = (x: number, y: number, board: number[][]): boolean => board[y][x] === SpriteTypeEnum.FOOD;
 

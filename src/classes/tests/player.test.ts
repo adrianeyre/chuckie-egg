@@ -10,8 +10,11 @@ describe('Player', () => {
 	beforeEach(() => {
 		defaultConfig = {
 			key: 'player',
-			name: 'name',
+			visable: true,
+			x: 1,
 			y: 1,
+			height: 1,
+			width: 1,
 		}
 
 		player = new Player(defaultConfig);
