@@ -9,4 +9,6 @@ export default interface IChuckieEggState {
 	containerMargin: number;
 	fallTimer?: any;
 	fallTimerInterval: number;
+	jumpTimer?: any;
+	jumpTimerInterval: number;
 }

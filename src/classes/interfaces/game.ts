@@ -7,4 +7,5 @@ export default interface IGame {
 	timer: any;
 	handleInput(playerResult: PlayerResultEnum, key?: string): PlayerResultEnum;
 	handleFallTimer(): PlayerResultEnum;
+	handleJumpTimer(): PlayerResultEnum;
 }

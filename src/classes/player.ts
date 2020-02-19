@@ -24,7 +24,11 @@ export default class Player implements IPlayer {
 	public direction: DirectionEnum;
 	public score: number;
 	public isFalling: boolean;
+	public isJumping: boolean;
 
+	private readonly DEFAULT_Z_INDEX: number = 5000;
+	private imageIteration: number = 0;
+	private jumpIteration: number = 0;
 	private images = [
 		[],
 		[playerUp1, playerUp2, playerUp1, playerUp3],
@@ -37,8 +41,18 @@ export default class Player implements IPlayer {
 		[],
 		[playerRightStood]
 	]
-	private readonly DEFAULT_Z_INDEX: number = 5000;
-	private imageIteration: number = 0;
+	private jumpMatrix = [
+		[],
+		[[-1, -1], [-1, -1], [1, 1], [1, 1], [0, 0]],
+		[],
+		[[1, -1], [1, -1], [1, 1]],
+		[],
+		[],
+		[],
+		[[-1, -1], [-1, -1], [-1, 1]],
+		[],
+		[]
+	]
 
 	constructor(config: IPlayerConfig) {
 		this.key = config.key;
@@ -52,6 +66,7 @@ export default class Player implements IPlayer {
 		this.image = this.images[this.direction][this.imageIteration]
 		this.score = 0;
 		this.isFalling = false;
+		this.isJumping = false;
 	}
 
 	public move = (direction: DirectionEnum, board: number[][]): PlayerResultEnum => {
@@ -60,12 +75,48 @@ export default class Player implements IPlayer {
 		this.x = x;
 		this.y = y
 
-		this.imageIteration ++;
-		if (this.imageIteration > this.images[this.direction].length - 1) this.imageIteration = 0;
 		this.direction = direction;
-		this.image = this.images[this.direction][this.imageIteration]
+		this.updateImage(this.direction)
 
 		return outcome;
+	}
+
+	public jump = (board: number[][]): PlayerResultEnum => {
+		this.isJumping = true;
+		const matrix = this.jumpMatrix[this.direction];
+		if (matrix.length < 1) return PlayerResultEnum.SAFE;
+
+		const nextMove = matrix[this.jumpIteration];
+
+		let x = this.x + nextMove[0];
+		let y = this.y + nextMove[1];
+
+		if (this.isBlock(x, y, board) || this.isLadder(x, y, board)) {
+			this.isJumping = false;
+			this.jumpIteration = 0;
+			return PlayerResultEnum.STOP_JUMP_TIMER;
+		}
+
+		this.x = x;
+		this.y = y;
+
+		this.jumpIteration++;
+		if (this.jumpIteration > matrix.length - 1) this.jumpIteration = matrix.length - 1;
+		return PlayerResultEnum.SAFE;
+	}
+
+	private isBlock = (x: number, y: number, board: number[][]): boolean =>
+		board[y][x] === SpriteTypeEnum.FLOOR1 ||
+		board[y][x] === SpriteTypeEnum.FLOOR2;
+	
+	private isLadder = (x: number, y: number, board: number[][]): boolean =>
+		(this.direction === DirectionEnum.LEFT && board[y][x+1] === SpriteTypeEnum.LADDER2) ||
+		(this.direction === DirectionEnum.RIGHT && board[y][x-1] === SpriteTypeEnum.LADDER2);
+
+	private updateImage = (direction: DirectionEnum): void => {
+		this.imageIteration ++;
+		if (this.imageIteration > this.images[this.direction].length - 1) this.imageIteration = 0;
+		this.image = this.images[this.direction][this.imageIteration]
 	}
 
 	private checkSpace = (direction: DirectionEnum, board: number[][]): any => {

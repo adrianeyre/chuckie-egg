@@ -1,3 +1,4 @@
 export default interface IChuckieEggProps {
-	playerName?: string;
+	level?: number;
+	refreshGameState?: any;
 }
