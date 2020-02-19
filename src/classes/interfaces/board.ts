@@ -9,7 +9,10 @@ export default interface IBoard {
 	player: IPlayer;
 	board: number[][];
 	fileService: IFileService;
+	eggs: number;
+	time: number;
 	readBoard(level: number): Promise<void>;
 	movePlayer(direction: DirectionEnum): PlayerResultEnum;
 	jump(): PlayerResultEnum;
+	decreaseTime(): void;
 }

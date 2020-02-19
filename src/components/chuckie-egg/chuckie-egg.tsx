@@ -25,6 +25,7 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 			containerWidth: 800,
 			containerHeight: 800,
 			containerMargin: 0,
+			timerInterval: 100,
 			fallTimerInterval: 100,
 			jumpTimerInterval: 100,
 		}
@@ -40,6 +41,7 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 	}
 
 	public async componentWillUnmount() {
+		await this.stopTimer();
 		await this.stopFallTimer();
 		await this.stopJumpTimer();
 		window.removeEventListener('resize', this.updatePlayerArea);
@@ -53,7 +55,7 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 
 			{ this.state.game && <div>
 				<div className="play-area">
-					<div style={ this.styleStatusTop() }><GameStatusTop score={ this.state.game.board.player.score } hiScore={ 10000 } /></div>
+					<div style={ this.styleStatusTop() }><GameStatusTop score={ this.state.game.board.player.score } lives={ this.state.game.board.player.lives } level={ this.state.game.level } time={ this.state.game.board.time } /></div>
 
 					{ this.state.game.board.sprites.map((sprite: ISprite) => <DrawSprite key={ sprite.key } onMouseOver={ this.onMouseOver } onContextMenu={ this.onContextMenu } onClick={ this.onClick } sprite={ sprite } height={ this.state.spriteHeight } width={ this.state.spriteWidth } containerWidth={ this.state.containerWidth } />) }
 
@@ -112,6 +114,12 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 		await this.handleInput(event.keyCode);
 	}
 
+	private startTimer = async (): Promise<void> => {
+		const timer = setInterval(this.myTimer, this.state.timerInterval);
+
+		await this.setState(() => ({ timer }));
+	}
+
 	private startFallTimer = async (): Promise<void> => {
 		const fallTimer = setInterval(this.myFallTimer, this.state.fallTimerInterval);
 
@@ -124,6 +132,18 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 		await this.setState(() => ({ jumpTimer }));
 	}
 
+	private stopAllTimers = (): void => {
+		this.stopTimer();
+		this.stopFallTimer();
+		this.stopJumpTimer();
+	}
+
+	private stopTimer = async (): Promise<void> => {
+		clearInterval(this.state.timer);
+
+		await this.setState(() => ({ timer: undefined }));
+	}
+
 	private stopFallTimer = async (): Promise<void> => {
 		clearInterval(this.state.fallTimer);
 
@@ -134,6 +154,14 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 		clearInterval(this.state.jumpTimer);
 
 		await this.setState(() => ({ jumpTimer: undefined }));
+	}
+
+	private myTimer = (): void => {
+		if (!this.state.game) return;
+		const game = this.state.game
+		game.handleTimer();
+
+		this.setState(prev => ({ game }));
 	}
 
 	private myFallTimer = (): void => {
@@ -157,7 +185,12 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 	}
 
 	private refreshGameState = async (result: PlayerResultEnum): Promise<void> => {
+		if (!this.state.game) return;
+
 		const game = this.state.game
+		this.startTimer();
+
+		if (!game.isGameInPlay) this.stopAllTimers();
 
 		this.setState(prev => ({ game }));
 	}

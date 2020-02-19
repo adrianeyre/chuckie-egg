@@ -12,6 +12,7 @@ export default interface IPlayer {
 	zIndex: number
 	direction: DirectionEnum;
 	score: number;
+	lives: number;
 	isFalling: boolean;
 	isJumping: boolean;
 	move(direction: DirectionEnum, board: number[][]): PlayerResultEnum;

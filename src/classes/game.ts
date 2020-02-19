@@ -34,6 +34,8 @@ export default class Game implements IGame {
 				return this.board.movePlayer(DirectionEnum.LEFT);
 			case PlayerResultEnum.ENTER:
 				return this.board.player.isJumping ? PlayerResultEnum.SAFE : PlayerResultEnum.START_JUMP_TIMER;
+			// case PlayerResultEnum.COLLECT_EGG:
+			// 	this.board.collectEgg(); break;
 		}
 
 		return PlayerResultEnum.SAFE;
@@ -43,6 +45,11 @@ export default class Game implements IGame {
 		await this.board.readBoard(this.level);
 
 		this.refreshGameState();
+	}
+
+	public handleTimer = (): void => {
+		this.board.decreaseTime();
+		if (this.board.time < 1) this.isGameInPlay = false;
 	}
 
 	public handleFallTimer = (): PlayerResultEnum => this.board.movePlayer(DirectionEnum.FALL_DOWN);

@@ -1,4 +1,6 @@
 export default interface IGameStatusTopProps {
 	score: number;
-	hiScore: number;
+	level: number;
+	lives: number;
+	time: number;
 }
