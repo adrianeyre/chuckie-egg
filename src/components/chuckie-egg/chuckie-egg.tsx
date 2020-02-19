@@ -8,6 +8,7 @@ import DrawSprite from '../draw-sprite/draw-sprite';
 import InfoBoard from '../info-board/info-board';
 import GameStatusTop from '../game-status-top/game-status-top';
 import PlayerResultEnum from 'classes/enums/player-result-enum';
+import MobileButtons from '../mobile-buttons/mobile-buttons';
 
 import './styles/chuckie-egg.scss';
 
@@ -53,7 +54,7 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 
 			{ (!this.state.game || !this.state.game.isGameInPlay) && <InfoBoard startGame={ this.startGame } containerHeight={ this.state.containerHeight } /> }
 
-			{ this.state.game && <div>
+			{ this.state.game && this.state.game.isGameInPlay && <div>
 				<div className="play-area">
 					<div style={ this.styleStatusTop() }><GameStatusTop score={ this.state.game.board.player.score } lives={ this.state.game.board.player.lives } level={ this.state.game.level } time={ this.state.game.board.time } /></div>
 
@@ -61,6 +62,8 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 
 					<DrawSprite onMouseOver={ this.onMouseOver } onContextMenu={ this.onContextMenu } onClick={ this.onClick } sprite={ this.state.game.board.player } height={ this.state.spriteHeight } width={ this.state.spriteWidth } containerWidth={ this.state.containerWidth } />
 				</div>
+
+				{ this.state.containerWidth < 600 && <div style={ this.styleGameButtons() }><MobileButtons handleMobileButton={ this.handleMobileButton }/></div> }
 			</div> }
 		</div>
 	}
@@ -74,6 +77,13 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 	private styleContainer = () => ({
 		maxWidth: `${ this.state.containerHeight }px`,
 		marginLeft: `${ this.state.containerMargin }px`,
+	})
+
+	private styleGameButtons = () => ({
+		position: 'absolute' as 'absolute',
+		width: `100%`,
+		maxWidth: `${ this.state.containerHeight }px`,
+		top: `${ this.state.containerWidth / 100 * 70 }px`,
 	})
 
 	private startGame = async (): Promise<void> => {
@@ -194,6 +204,8 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 
 		this.setState(prev => ({ game }));
 	}
+
+	private handleMobileButton = async (direction: PlayerResultEnum): Promise<void> => await this.handleInput(direction);
 
 	private onMouseOver = (event: any) => {};
 	private onContextMenu = (event: any) => {};
