@@ -6,13 +6,14 @@ import IChuckieEggProps from './interfaces/chuckie-egg-props';
 import IChuckieEggState from './interfaces/chuckie-egg-state';
 import DrawSprite from '../draw-sprite/draw-sprite';
 import InfoBoard from '../info-board/info-board';
-
-import './styles/chuckie-egg.scss';
+import GameStatusTop from '../game-status-top/game-status-top';
 import PlayerResultEnum from 'classes/enums/player-result-enum';
 
+import './styles/chuckie-egg.scss';
+
 export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuckieEggState> {
-	private SPRITE_BLOCKS_WIDTH: number = 56//32//40//64;
-	private SPRITE_BLOCKS_HEIGHT: number = 30//30;
+	private SPRITE_BLOCKS_WIDTH: number = 56;
+	private SPRITE_BLOCKS_HEIGHT: number = 30;
 	private container: any;
 
 	constructor(props: IChuckieEggProps) {
@@ -24,7 +25,7 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 			containerWidth: 800,
 			containerHeight: 800,
 			containerMargin: 0,
-			timerInterval: 1000,
+			fallTimerInterval: 100,
 		}
 
 		this.handleKeyDown = this.handleKeyDown.bind(this);
@@ -38,7 +39,7 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 	}
 
 	public async componentWillUnmount() {
-		await this.stopTimer();
+		await this.stopFallTimer();
 		window.removeEventListener('resize', this.updatePlayerArea);
 		window.removeEventListener('keydown', this.handleKeyDown);
 	}
@@ -50,22 +51,32 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 
 			{ this.state.game && <div>
 				<div className="play-area">
+					<div style={ this.styleStatusTop() }><GameStatusTop score={ this.state.game.board.player.score } hiScore={ 10000 } /></div>
+
 					{ this.state.game.board.sprites.map((sprite: ISprite) => <DrawSprite key={ sprite.key } onMouseOver={ this.onMouseOver } onContextMenu={ this.onContextMenu } onClick={ this.onClick } sprite={ sprite } height={ this.state.spriteHeight } width={ this.state.spriteWidth } containerWidth={ this.state.containerWidth } />) }
+
+					<DrawSprite onMouseOver={ this.onMouseOver } onContextMenu={ this.onContextMenu } onClick={ this.onClick } sprite={ this.state.game.board.player } height={ this.state.spriteHeight } width={ this.state.spriteWidth } containerWidth={ this.state.containerWidth } />
 				</div>
 			</div> }
 			
 		</div>
 	}
 
+	private styleStatusTop = () => ({
+		position: 'absolute' as 'absolute',
+		width: `100%`,
+		maxWidth: `${ this.state.containerHeight }px`,
+		marginLeft: `${ this.state.containerMargin }px`,
+	})
+
 	private styleContainer = () => ({
 		maxWidth: `${ this.state.containerHeight }px`,
-		marginLeft: `${ this.state.containerMargin }px`
+		marginLeft: `${ this.state.containerMargin }px`,
 	})
 
 	private startGame = async (): Promise<void> => {
 		const game = new Game(this.props);
 		game.isGameInPlay = true;
-		await this.startTimer();
 		await this.setState(() => ({ game }));
 		this.updatePlayerArea();
 	}
@@ -76,7 +87,7 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 		const containerMargin = (window.innerWidth - containerWidth) / 2;
 		if (containerWidth > containerHeight) containerWidth = containerHeight;
 		const spriteWidth = containerWidth / this.SPRITE_BLOCKS_WIDTH;
-		const spriteHeight = ((containerWidth / 100) * 100 ) / this.SPRITE_BLOCKS_HEIGHT;
+		const spriteHeight = ((containerWidth / 100) * 85 ) / this.SPRITE_BLOCKS_HEIGHT;
 		this.setState(() => ({ spriteWidth, spriteHeight, containerWidth, containerHeight, containerMargin }))
 	}
 
@@ -84,9 +95,11 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 		if (!this.state.game) return;
 
 		const game = this.state.game;
-		game.handleInput(input, key);
+		const result = game.handleInput(input, key);
 
-		if (!game.isGameInPlay) this.stopTimer();
+		if (result === PlayerResultEnum.START_FALL_TIMER) await this.startFallTimer();
+		if (!game.isGameInPlay) this.stopFallTimer();
+
 		await this.setState(() => ({ game }));
 	}
 
@@ -96,21 +109,24 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 		await this.handleInput(event.keyCode);
 	}
 
-	private startTimer = async (): Promise<void> => {
-		const timer = setInterval(this.myTimer, this.state.timerInterval);
+	private startFallTimer = async (): Promise<void> => {
+		const fallTimer = setInterval(this.myFallTimer, this.state.fallTimerInterval);
 
-		await this.setState(() => ({ timer }));
+		await this.setState(() => ({ fallTimer }));
 	}
 
-	private stopTimer = async (): Promise<void> => {
-		clearInterval(this.state.timer);
+	private stopFallTimer = async (): Promise<void> => {
+		clearInterval(this.state.fallTimer);
 
-		await this.setState(() => ({ timer: undefined }));
+		await this.setState(() => ({ fallTimer: undefined }));
 	}
 
-	private myTimer = (): void => {
+	private myFallTimer = (): void => {
 		if (!this.state.game) return;
 		const game = this.state.game
+		const result = game.handleFallTimer();
+
+		if (result === PlayerResultEnum.STOP_FALL_TIMER) this.stopFallTimer();
 
 		this.setState(prev => ({ game }));
 	}

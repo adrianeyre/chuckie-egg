@@ -1,5 +1,8 @@
 export default interface IPlayerConfig {
 	key: string;
-	name?: string;
+	visable: boolean;
+	x: number;
 	y: number;
+	height: number;
+	width: number;
 }

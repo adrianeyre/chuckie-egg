@@ -5,6 +5,6 @@ export default interface IGame {
 	isGameInPlay: boolean;
 	board: IBoard;
 	timer: any;
-	handleInput(playerResult: PlayerResultEnum, key?: string): void;
-	handleTimer(): void;
+	handleInput(playerResult: PlayerResultEnum, key?: string): PlayerResultEnum;
+	handleFallTimer(): PlayerResultEnum;
 }

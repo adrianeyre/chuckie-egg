@@ -26,27 +26,23 @@ export default class InfoBoard extends React.Component<IInfoBoardProps, {}> {
 						</tr>
 						<tr>
 							<td>Move Up</td>
-							<td>Mouse Up</td>
+							<td>Arrow Up</td>
 						</tr>
 						<tr>
 							<td>Move Down</td>
-							<td>Mouse Down</td>
+							<td>Arrow Down</td>
 						</tr>
 						<tr>
 							<td>Move Left</td>
-							<td>Mouse Left</td>
+							<td>Arrow Left</td>
 						</tr>
 						<tr>
 							<td>Move Right</td>
-							<td>Mouse Right</td>
+							<td>Arrow Right</td>
 						</tr>
 						<tr>
-							<td>Rotate</td>
-							<td>Right Click</td>
-						</tr>
-						<tr>
-							<td>Select</td>
-							<td>Left Click</td>
+							<td>Jump</td>
+							<td>Enter</td>
 						</tr>
 					</tbody>
 				</table>

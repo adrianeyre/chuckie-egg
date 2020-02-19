@@ -6,6 +6,16 @@ export default class DrawSprite extends React.Component<IDrawSpriteProps, {}> {
 	private offsetHeight: number = 0;
 	private offsetWidth: number = 0;
 
+	constructor(props: IDrawSpriteProps) {
+		super(props);
+
+		this.updateOffSets();
+	}
+
+	public componentDidUpdate() {
+		this.updateOffSets();
+	}
+
 	public render() {
 		if (!this.props.sprite.visable) return <div></div>
 
@@ -39,5 +49,9 @@ export default class DrawSprite extends React.Component<IDrawSpriteProps, {}> {
 
 	private onMouseOver = (): void => {
 		if (this.props.onMouseOver) this.props.onMouseOver(this.props.sprite.key);
+	}
+
+	private updateOffSets = () => {
+		this.offsetHeight = ((this.props.containerWidth / 100) * 9);
 	}
 }
