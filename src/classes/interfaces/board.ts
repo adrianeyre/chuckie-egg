@@ -12,7 +12,6 @@ export default interface IBoard {
 	eggs: number;
 	time: number;
 	readBoard(level: number): Promise<void>;
-	movePlayer(direction: DirectionEnum): PlayerResultEnum;
-	jump(): PlayerResultEnum;
+	movePlayer(direction: DirectionEnum): PlayerResultEnum[];
 	decreaseTime(): void;
 }

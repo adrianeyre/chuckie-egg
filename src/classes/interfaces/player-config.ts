@@ -3,6 +3,9 @@ export default interface IPlayerConfig {
 	visable: boolean;
 	x: number;
 	y: number;
+	xPos: number;
+	yPos: number;
 	height: number;
 	width: number;
+	xOffset: number;
 }

@@ -6,8 +6,8 @@ export default interface IGame {
 	board: IBoard;
 	timer: any;
 	level: number;
-	handleInput(playerResult: PlayerResultEnum, key?: string): PlayerResultEnum;
+	handleInput(playerResult: PlayerResultEnum, key?: string): PlayerResultEnum[];
 	handleTimer(): void;
-	handleFallTimer(): PlayerResultEnum;
-	handleJumpTimer(): PlayerResultEnum;
+	handleFallTimer(): PlayerResultEnum[];
+	handleJumpTimer(): PlayerResultEnum[];
 }

@@ -3,6 +3,8 @@ import IPlayerConfig from './interfaces/player-config'
 import DirectionEnum from './enums/direction-enum';
 import PlayerResultEnum from './enums/player-result-enum';
 import SpriteTypeEnum from './enums/sprite-type-enum';
+import IBlockPosition from './interfaces/block-position';
+import IJumpMatrix from './interfaces/jump-matrix';
 
 import playerRightStood from '../images/player-right-stood.png';
 import playerRight from '../images/player-right.png';
@@ -17,9 +19,12 @@ export default class Player implements IPlayer {
 	public visable: boolean;
 	public x: number;
 	public y: number;
+	public xPos: number;
+	public yPos: number;
 	public height: number;
 	public width: number;
 	public image: string;
+	public xOffset: number;
 	public zIndex: number
 	public direction: DirectionEnum;
 	public score: number;
@@ -33,38 +38,54 @@ export default class Player implements IPlayer {
 	private readonly DEFAULT_FOOD_SCORE: number = 10;
 	private imageIteration: number = 0;
 	private jumpIteration: number = 0;
-	private images = [
-		[playerRightStood],
-		[playerUp1, playerUp2, playerUp1, playerUp3],
-		[],
-		[playerRightStood, playerRight],
-		[],
-		[playerUp1, playerUp2, playerUp1, playerUp3],
-		[],
-		[playerLeftStood, playerLeft],
-		[],
-		[playerRightStood]
-	]
-	private jumpMatrix = [
-		[[0, -1], [0, -1], [0, 1], [0, 1], [0, 0]],
-		[[0, -1], [0, -1], [0, 1], [0, 1], [0, 0]],
-		[],
-		[[1, -1], [1, -1], [1, 1]],
-		[],
-		[],
-		[],
-		[[-1, -1], [-1, -1], [-1, 1]],
-		[],
-		[]
-	]
+	private images = {
+		[DirectionEnum.STAND]: [playerRightStood],
+		[DirectionEnum.UP]: [playerUp1, playerUp2, playerUp1, playerUp3],
+		[DirectionEnum.UP_RIGHT]: [],
+		[DirectionEnum.RIGHT]: [playerRightStood, playerRight],
+		[DirectionEnum.DOWN_RIGHT]: [],
+		[DirectionEnum.DOWN]: [playerUp1, playerUp2, playerUp1, playerUp3],
+		[DirectionEnum.DOWN_LEFT]: [],
+		[DirectionEnum.LEFT]: [playerLeftStood, playerLeft],
+		[DirectionEnum.UP_LEFT]: [],
+		[DirectionEnum.FLOOR_RIGHT]: [],
+		[DirectionEnum.FLOOR_LEFT]: [],
+		[DirectionEnum.FALL_DOWN]: [playerRightStood],
+		[DirectionEnum.JUMP]: [],
+	}
+	private jumpMatrix: IJumpMatrix = {
+		// [DirectionEnum.STAND]: [[0, -1], [0, -1], [0, 1], [0, 1], [0, 0]],
+		[DirectionEnum.UP]: [
+			{ direction: DirectionEnum.UP, x: 0, y: -1 },
+			{ direction: DirectionEnum.UP, x: 0, y: -1 },
+			{ direction: DirectionEnum.DOWN, x: 0, y: 1 },
+			{ direction: DirectionEnum.DOWN, x: 0, y: 1 },
+			{ direction: DirectionEnum.DOWN, x: 0, y: 0 },
+		],
+		[DirectionEnum.RIGHT]: [
+			{ direction: DirectionEnum.UP, x: 0, y: -1 },
+			{ direction: DirectionEnum.UP, x: 1, y: -1 },
+			{ direction: DirectionEnum.UP, x: 1, y: -1 },
+			{ direction: DirectionEnum.DOWN, x: 1, y: 1 },
+		],
+		[DirectionEnum.LEFT]: [
+			{ direction: DirectionEnum.UP, x: -1, y: -1 },
+			{ direction: DirectionEnum.UP, x: -1, y: -1 },
+			{ direction: DirectionEnum.DOWN, x: -1, y: 1 },
+		],
+		// [DirectionEnum.FALL_DOWN]: [[0, 0]],
+	}
 
 	constructor(config: IPlayerConfig) {
 		this.key = config.key;
 		this.visable = config.visable;
 		this.x = config.x;
 		this.y = config.y;
+		this.xPos = config.xPos;
+		this.yPos = config.yPos;
 		this.height = config.height;
 		this.width = config.width;
+		this.xOffset = config.xOffset;
 		this.zIndex = this.DEFAULT_Z_INDEX;
 		this.direction = DirectionEnum.STAND;
 		this.image = this.images[this.direction][this.imageIteration]
@@ -74,184 +95,225 @@ export default class Player implements IPlayer {
 		this.isJumping = false;
 	}
 
-	public move = (direction: DirectionEnum, board: number[][]): PlayerResultEnum => {
-		if (this.isJumping) return PlayerResultEnum.SAFE;
+	public move = (direction: DirectionEnum, blocksAroundPoint: any): PlayerResultEnum[] => {
+		if (this.isFalling && direction !== DirectionEnum.FALL_DOWN) return [];
 
-		let { x, y, outcome } = this.checkSpace(direction, board);
+		let x = this.xPos;
+		let y = this.yPos;
+		const isOnBlock = !Number.isInteger(this.x / 2)
+		const result = this.checkIfDirectionValid(direction, x, y, blocksAroundPoint, isOnBlock);
 
-		this.x = x;
-		this.y = y
+		if (result.validMove) {
+			this.direction = direction;
+			this.updateValidMove();
+			this.updateImage();
+		}
 
-		this.direction = direction;
-		this.updateImage(this.direction)
+		const blocksAroundPlayer = blocksAroundPoint(this.xPos, this.yPos);
+		this.checkForEgg(blocksAroundPlayer, direction, isOnBlock, result.outcome);
+		this.checkForFood(blocksAroundPlayer, isOnBlock, result.outcome);
 
-		return outcome;
+		return result.outcome;
 	}
 
-	public jump = (board: number[][]): PlayerResultEnum => {
-		let outcome = PlayerResultEnum.SAFE
-		if (this.isFalling) return outcome;
+	private checkIfDirectionValid = (direction: DirectionEnum, x: number, y: number, blocksAroundPoint: any, isOnBlock: boolean): any => {
+		const blocksAroundPlayer = blocksAroundPoint(x, y);
+		let result = { validMove: false, outcome: [] }
+
+		switch (direction) {
+			case DirectionEnum.UP:
+				result = this.checkUp(blocksAroundPlayer, isOnBlock); break;
+			case DirectionEnum.RIGHT:
+				result = this.checkRight(x, y, blocksAroundPlayer, isOnBlock); break;
+			case DirectionEnum.DOWN:
+				result = this.checkDown(blocksAroundPlayer, isOnBlock); break;
+			case DirectionEnum.LEFT:
+				result = this.checkLeft(x, y, blocksAroundPlayer, isOnBlock); break;
+			case DirectionEnum.FALL_DOWN:
+				result = this.fall(x, y, blocksAroundPlayer); break;
+			case DirectionEnum.JUMP:
+				result = this.jump(x, y, blocksAroundPoint); break;
+		}
+
+		return result;
+	}
+
+	private updateValidMove = (): void => {
+		switch (this.direction) {
+			case DirectionEnum.UP:
+				this.y--; break;
+			case DirectionEnum.RIGHT:
+				this.x++; break;
+			case DirectionEnum.DOWN:
+			case DirectionEnum.FALL_DOWN:
+				this.y++; break;
+			case DirectionEnum.LEFT:
+				this.x--; break;
+		}
+
+		this.xPos = Math.floor(this.x / 2);
+		this.yPos = this.y - 1;
+	}
+
+	private jump = (x: number, y: number, blocksAroundPoint: any): any => {
+		let result = { validMove: false, outcome: this.isJumping ? [] : [PlayerResultEnum.START_JUMP_TIMER] }
+		if (this.isFalling) return result;
+
+		const matrix = this.jumpMatrix[this.direction];
+		if (!matrix) throw Error(`No jump matrix found for direction id: ${ this.direction }`);
 
 		this.isJumping = true;
-		const matrix = this.jumpMatrix[this.direction];
-		if (matrix.length < 1) return outcome;
-
+		// const isOnBlock = !Number.isInteger(this.x / 2)
+		
+		if (this.jumpIteration > matrix.length - 1) this.jumpIteration = matrix.length - 1;
+		console.log(`this.jumpIteration = ${this.jumpIteration}`)
 		const nextMove = matrix[this.jumpIteration];
+		const lastMove = nextMove.x === 0 && nextMove.y === 0;
 
-		let x = this.x + nextMove[0];
-		let y = this.y + nextMove[1];
-		const lastMove = nextMove[0] === 0 && nextMove[1] === 0;
+		x += nextMove.x;
+		y += nextMove.y;
 
-		if (lastMove || this.isBlock(x, y, board) || this.isLadder(x, y, board)) {
+		console.log(`x: ${x}, y: ${y}`)
+
+		// if (lastMove || this.isBlock(x, y, board)) {//} || this.isLadder(x, y, board)) {
+		// 	this.isJumping = false;
+		// 	this.jumpIteration = 0;
+		// 	console.log('LANDED')
+		// 	result.outcome = PlayerResultEnum.STOP_JUMP_TIMER;
+		// 	return result
+		// }
+
+		// let blockInWay = false
+		// switch (this.direction) {
+		// 	case DirectionEnum.RIGHT:
+		// 		blockInWay = x > board[0].length - 1 || this.blockInFrontToRight(x, y, board); break;
+		// 	case DirectionEnum.LEFT:
+		// 		blockInWay = x < 1 || this.blockInFrontToLeft(x, y, board); break;
+		// }
+
+		// if (blockInWay) {
+		// 	console.log('BLOCK IN WAY!!!!!!!!!!!')
+		// 	this.resetDirection();
+		// 	return this.jump(x, y, board);
+		// }
+
+		this.xPos = x;
+		this.yPos = y;
+		this.x = this.xPos * 2 + 1;
+		this.y = this.yPos + 1;
+
+		const blocksAroundPlayer = blocksAroundPoint(x, y);
+		const blockBelowWhenGoingDown = nextMove.direction === DirectionEnum.DOWN && blocksAroundPlayer[DirectionEnum.DOWN] === SpriteTypeEnum.FLOOR
+		const ladderBelowWhenGoingDown = nextMove.direction === DirectionEnum.DOWN && blocksAroundPlayer[DirectionEnum.DOWN] === SpriteTypeEnum.LADDER
+
+		if (lastMove || blockBelowWhenGoingDown || ladderBelowWhenGoingDown) {
 			this.isJumping = false;
 			this.jumpIteration = 0;
-			return PlayerResultEnum.STOP_JUMP_TIMER;
-		}
+			result.outcome.push(PlayerResultEnum.STOP_JUMP_TIMER);
 
-		let blockInWay = false
-		switch (this.direction) {
-			case DirectionEnum.RIGHT:
-				blockInWay = x > board[0].length - 1 || this.blockInFrontToRight(x, y, board); break;
-			case DirectionEnum.LEFT:
-				blockInWay = x < 1 || this.blockInFrontToLeft(x, y, board); break;
+			return result
 		}
-
-		if (blockInWay) {
-			this.resetDirection();
-			return this.jump(board);
-		}
-
-		this.x = x;
-		this.y = y;
 
 		this.jumpIteration++;
-		if (this.jumpIteration > matrix.length - 1) this.jumpIteration = matrix.length - 1;
 
-		if (this.isEgg(x + 1, y, board)) outcome = this.collectEgg(x + 1, y, board);
-		if (this.isFood(x + 1, y, board)) outcome = this.collectFood(x + 1, y, board);
-
-		return outcome;
+		return result;
 	}
 
-	private resetDirection = () => {
-		switch (this.direction) {
-			case DirectionEnum.RIGHT:
-				this.direction = DirectionEnum.LEFT; break;
-			case DirectionEnum.LEFT:
-				this.direction = DirectionEnum.RIGHT; break;
-		}
-	}
+	// private resetDirection = () => {
+	// 	switch (this.direction) {
+	// 		case DirectionEnum.RIGHT:
+	// 			this.direction = DirectionEnum.LEFT; break;
+	// 		case DirectionEnum.LEFT:
+	// 			this.direction = DirectionEnum.RIGHT; break;
+	// 	}
+	// }
 
-	private updateImage = (direction: DirectionEnum): void => {
+	private updateImage = (): void => {
 		this.imageIteration ++;
 		if (this.imageIteration > this.images[this.direction].length - 1) this.imageIteration = 0;
 		this.image = this.images[this.direction][this.imageIteration]
 	}
 
-	private checkSpace = (direction: DirectionEnum, board: number[][]): any => {
-		let x = this.x;
-		let y = this.y;
-		let outcome = PlayerResultEnum.SAFE
-		
-		if (this.isFalling && direction !== DirectionEnum.FALL_DOWN) return { x, y, outcome };
-
-		switch (direction) {
-			case DirectionEnum.UP:
-				y = this.checkUp(x, y, board); break;
-			case DirectionEnum.RIGHT:
-				return this.checkRight(x, y, board);
-			case DirectionEnum.DOWN:
-				y = this.checkDown(x, y, board); break;
-			case DirectionEnum.LEFT:
-				return this.checkLeft(x, y, board);
-			case DirectionEnum.FALL_DOWN:
-				return this.fall(x, y, board);
-		}
-
-		return { x, y, outcome };
-	}
-
-	private fall = (x: number, y: number, board: number[][]): any => {
-		if (board[y+1][x] >= SpriteTypeEnum.FLOOR1 && board[y+1][x] <= SpriteTypeEnum.LADDER2) {
+	private fall = (x: number, y: number, blocksAroundPlayer: any): any => {
+		if (blocksAroundPlayer[DirectionEnum.DOWN] >= SpriteTypeEnum.FLOOR && blocksAroundPlayer[DirectionEnum.DOWN] <= SpriteTypeEnum.LADDER) {
 			this.isFalling = false;
-			return { x, y, outcome: PlayerResultEnum.STOP_FALL_TIMER }
+			return { validMove: false, outcome: [PlayerResultEnum.STOP_FALL_TIMER] }
 		}
 
-		return { x, y: y + 1, outcome: PlayerResultEnum.SAFE }
+		return { validMove: true, outcome: [] }
 	}
 
-	private checkRight = (x: number, y: number, board: number[][]): any => {
-		let outcome = PlayerResultEnum.SAFE;
-		if (x >= board[0].length - 1) return { x, y, outcome};
+	private checkUp = (blocksAroundPlayer: IBlockPosition, isOnBlock: boolean): any => ({
+		validMove: isOnBlock && blocksAroundPlayer[DirectionEnum.UP] === SpriteTypeEnum.LADDER,
+		outcome: []
+	})
 
-		const blankSpaceBelow = this.blankSpaceBelowRight(x, y, board);
-		const ladderSpaceBelow = this.ladderSpaceBelow(x, y, board);
-		this.isFalling = blankSpaceBelow && !ladderSpaceBelow
+	private checkDown = (blocksAroundPlayer: IBlockPosition, isOnBlock: boolean): any => ({
+		validMove: isOnBlock && blocksAroundPlayer[DirectionEnum.DOWN] === SpriteTypeEnum.LADDER,
+		outcome: []
+	})
 
-		const blockBelowNotBlank = this.blockBelowNotBlank(x, y, board);
-		const blockNextToLadder = this.blockNextToLadderRight(x, y, board);
+	private checkRight = (x: number, y: number, blocksAroundPlayer: IBlockPosition, isOnBlock: boolean): any => {
+		let outcome: PlayerResultEnum[] = [];
+
+		if (blocksAroundPlayer[DirectionEnum.RIGHT] === undefined && isOnBlock) return { x, y, outcome};
+
+		const notFloorSpaceBelow = blocksAroundPlayer[DirectionEnum.DOWN] !== SpriteTypeEnum.FLOOR;
+		const ladderSpaceBelow = blocksAroundPlayer[DirectionEnum.DOWN] === SpriteTypeEnum.LADDER;
+		this.isFalling = !isOnBlock && notFloorSpaceBelow && !ladderSpaceBelow
+		console.log(`notFloorSpaceBelow = ${notFloorSpaceBelow}, ladderSpaceBelow = ${ladderSpaceBelow}, isFalling = ${this.isFalling}`)
+
+		const blockBelowNotBlank = blocksAroundPlayer[DirectionEnum.DOWN] !== SpriteTypeEnum.BLANK;
+		const blockNextToLadder = blocksAroundPlayer[DirectionEnum.DOWN_RIGHT] === SpriteTypeEnum.FLOOR;
+		const canMoveRight = ladderSpaceBelow ? blockBelowNotBlank && blockNextToLadder : blockBelowNotBlank;
+		console.log(`blockBelowNotBlank = ${blockBelowNotBlank}, blockNextToLadder = ${blockNextToLadder}, ladderSpaceBelow = ${ladderSpaceBelow}, canMoveRight = ${canMoveRight}`)
+		
+		const blockInfront = isOnBlock && blocksAroundPlayer[DirectionEnum.FLOOR_RIGHT] === SpriteTypeEnum.FLOOR;
+		console.log(`blockInfront = ${blockInfront}`)
+
+		const validMove = (canMoveRight || this.isFalling) && !blockInfront;
+		console.log(`validMove = ${validMove}`)
+		return { validMove, outcome: this.isFalling ? [PlayerResultEnum.START_FALL_TIMER] : outcome }
+	}
+
+	private checkLeft = (x: number, y: number, blocksAroundPlayer: IBlockPosition, isOnBlock: boolean): any => {
+		let outcome: PlayerResultEnum[] = [];
+
+		if (blocksAroundPlayer[DirectionEnum.LEFT] === undefined && isOnBlock) return { x, y, outcome};
+
+		const notFloorSpaceBelow = blocksAroundPlayer[DirectionEnum.DOWN_LEFT] !== SpriteTypeEnum.FLOOR;
+		const ladderSpaceBelow = isOnBlock && blocksAroundPlayer[DirectionEnum.DOWN] === SpriteTypeEnum.LADDER;
+		// this.isFalling = isOnBlock && blankSpaceBelow && !ladderSpaceBelow
+		this.isFalling = notFloorSpaceBelow && !ladderSpaceBelow
+
+		const blockBelowNotBlank = blocksAroundPlayer[DirectionEnum.DOWN] !== SpriteTypeEnum.BLANK;
+		const blockNextToLadder = blocksAroundPlayer[DirectionEnum.DOWN_LEFT] === SpriteTypeEnum.FLOOR;
 		const canMoveRight = ladderSpaceBelow ? blockBelowNotBlank && blockNextToLadder : blockBelowNotBlank;
 		
-		const blockInfront = this.blockInFrontToRight(x, y, board);
+		const blockInfront = isOnBlock && blocksAroundPlayer[DirectionEnum.FLOOR_LEFT] === SpriteTypeEnum.FLOOR;
 
-		if (this.isEgg(x + 1, y, board)) outcome = this.collectEgg(x + 1, y, board);
-		if (this.isFood(x + 1, y, board)) outcome = this.collectFood(x + 1, y, board);
-
-		x = (canMoveRight || this.isFalling) && !blockInfront ? x + 1 : x;
-		return { x, y, outcome: this.isFalling ? PlayerResultEnum.START_FALL_TIMER : outcome }
+		const validMove = (canMoveRight || this.isFalling) && !blockInfront
+		return { validMove, outcome: this.isFalling ? [PlayerResultEnum.START_FALL_TIMER] : outcome }
 	}
 
-	private checkLeft = (x: number, y: number, board: number[][]): any => {
-		let outcome = PlayerResultEnum.SAFE;
-		if (x < 2) return { x, y, outcome };
+	private checkForEgg = (blocksAroundPlayer: IBlockPosition, direction: DirectionEnum, isOnBlock: boolean, outcome: PlayerResultEnum[]): PlayerResultEnum[] => {
+		if (
+			(direction === DirectionEnum.FALL_DOWN && blocksAroundPlayer[DirectionEnum.STAND] === SpriteTypeEnum.EGG) ||
+			(!isOnBlock && blocksAroundPlayer[DirectionEnum.STAND] === SpriteTypeEnum.EGG)
+		) {
+			this.score += this.DEFAULT_EGG_SCORE;
+			outcome.push(PlayerResultEnum.COLLECT_EGG);
+		}
 
-		const blankSpaceBelow = this.blankSpaceBelowLeft(x, y, board)
-		const ladderSpaceBelow = this.ladderSpaceBelow(x, y, board);
-		this.isFalling = blankSpaceBelow && !ladderSpaceBelow
-
-		const blockBelowNotBlank = this.blockBelowNotBlank(x, y, board);
-		const blockNextToLadder = this.blockNextToLadderLeft(x, y, board);
-		const canMoveRight = ladderSpaceBelow ? blockBelowNotBlank && blockNextToLadder : blockBelowNotBlank;
-		
-		const blockInfront = this.blockInFrontToLeft(x, y, board);
-
-		if (this.isEgg(x - 1, y, board)) outcome = this.collectEgg(x - 1, y, board);
-		if (this.isFood(x - 1, y, board)) outcome = this.collectFood(x - 1, y, board);
-
-		x = (canMoveRight || this.isFalling) && !blockInfront ? x - 1 : x;
-		return { x, y, outcome: this.isFalling ? PlayerResultEnum.START_FALL_TIMER : outcome }
+		return outcome;
 	}
 
-	private isBlock = (x: number, y: number, board: number[][]): boolean =>
-		board[y][x - 1] === SpriteTypeEnum.FLOOR1 ||
-		board[y][x - 1] === SpriteTypeEnum.FLOOR2;
-	
-	private isLadder = (x: number, y: number, board: number[][]): boolean =>
-		(this.direction === DirectionEnum.LEFT && board[y][x+1] === SpriteTypeEnum.LADDER2) ||
-		(this.direction === DirectionEnum.RIGHT && board[y][x-1] === SpriteTypeEnum.LADDER2);
+	private checkForFood = (blocksAroundPlayer: IBlockPosition, isOnBlock: boolean, outcome: PlayerResultEnum[]): PlayerResultEnum[] => {
+		if (!isOnBlock && blocksAroundPlayer[DirectionEnum.STAND] === SpriteTypeEnum.FOOD) {
+			this.score += this.DEFAULT_FOOD_SCORE;
+			outcome.push(PlayerResultEnum.COLLECT_FOOD);
+		}
 
-	private checkUp = (x: number, y: number, board: number[][]): number => y > 1 && board[y - 2][x] === SpriteTypeEnum.LADDER2 ? y - 1 : y;
-	private checkDown = (x: number, y: number, board: number[][]): number => y < board.length - 2 && board[y + 1][x] === SpriteTypeEnum.LADDER2 ? y + 1 : y;
-	private blockNextToLadderLeft = (x: number, y: number, board: number[][]): boolean => board[y+1][x-2] !== SpriteTypeEnum.BLANK;
-	private blockNextToLadderRight = (x: number, y: number, board: number[][]): boolean => board[y+1][x+1] !== SpriteTypeEnum.BLANK;
-	private blockBelowNotBlank = (x: number, y: number, board: number[][]): boolean => board[y+1][x] !== SpriteTypeEnum.BLANK;
-	private ladderSpaceBelow = (x: number, y: number, board: number[][]): boolean => board[y+1][x] === SpriteTypeEnum.LADDER2;
-	private blankSpaceBelowLeft = (x: number, y: number, board: number[][]): boolean => board[y+1][x-1] === SpriteTypeEnum.BLANK;
-	private blankSpaceBelowRight = (x: number, y: number, board: number[][]): boolean => board[y+1][x] === SpriteTypeEnum.BLANK;
-	private blockInFrontToLeft = (x: number, y: number, board: number[][]): boolean => board[y][x-1] === SpriteTypeEnum.FLOOR1 || board[y][x-1] === SpriteTypeEnum.FLOOR2;
-	private blockInFrontToRight = (x: number, y: number, board: number[][]): boolean => board[y][x+1] === SpriteTypeEnum.FLOOR1 || board[y][x+1] === SpriteTypeEnum.FLOOR2;
-	private isEgg = (x: number, y: number, board: number[][]): boolean => board[y][x] === SpriteTypeEnum.EGG;
-	private isFood = (x: number, y: number, board: number[][]): boolean => board[y][x] === SpriteTypeEnum.FOOD;
-
-	private collectEgg = (x: number, y: number, board: number[][]): PlayerResultEnum => {
-		board[y][x] = SpriteTypeEnum.BLANK;
-		this.score += this.DEFAULT_EGG_SCORE;
-		return PlayerResultEnum.COLLECT_EGG;
-	}
-
-	private collectFood = (x: number, y: number, board: number[][]): PlayerResultEnum => {
-		board[y][x] = SpriteTypeEnum.BLANK;
-		this.score += this.DEFAULT_FOOD_SCORE;
-		return PlayerResultEnum.COLLECT_FOOD;
+		return outcome;
 	}
 }

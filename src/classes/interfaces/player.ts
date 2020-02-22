@@ -6,8 +6,11 @@ export default interface IPlayer {
 	visable: boolean;
 	x: number;
 	y: number;
+	xPos: number;
+	yPos: number;
 	height: number;
 	width: number;
+	xOffset: number;
 	image: string;
 	zIndex: number
 	direction: DirectionEnum;
@@ -15,6 +18,5 @@ export default interface IPlayer {
 	lives: number;
 	isFalling: boolean;
 	isJumping: boolean;
-	move(direction: DirectionEnum, board: number[][]): PlayerResultEnum;
-	jump(board: number[][]): PlayerResultEnum;
+	move(direction: DirectionEnum, blocksAroundPoint: any): PlayerResultEnum[];
 }

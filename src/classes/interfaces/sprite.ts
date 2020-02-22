@@ -5,11 +5,12 @@ export default interface ISprite {
 	visable: boolean;
 	x: number;
 	y: number;
+	xPos: number;
+	yPos: number;
 	width: number;
 	height: number;
+	xOffset: number;
 	zIndex: number
 	image: string;
 	type: SpriteTypeEnum;
-	updateImage(image: string): string;
-	updateType(type: SpriteTypeEnum): SpriteTypeEnum;
 }

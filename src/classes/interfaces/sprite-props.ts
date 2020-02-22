@@ -5,8 +5,11 @@ export default interface ISpriteProps {
 	visable: boolean;
 	x: number;
 	y: number;
+	xPos: number;
+	yPos: number;
 	width: number;
 	height: number;
+	xOffset: number;
 	imageIndex: number;
 	type: SpriteTypeEnum;
 }

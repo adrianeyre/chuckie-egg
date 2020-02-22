@@ -13,7 +13,7 @@ import MobileButtons from '../mobile-buttons/mobile-buttons';
 import './styles/chuckie-egg.scss';
 
 export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuckieEggState> {
-	private SPRITE_BLOCKS_WIDTH: number = 56;
+	private SPRITE_BLOCKS_WIDTH: number = 40;
 	private SPRITE_BLOCKS_HEIGHT: number = 30;
 	private container: any;
 
@@ -110,8 +110,9 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 		const game = this.state.game;
 		const result = game.handleInput(input, key);
 
-		if (result === PlayerResultEnum.START_FALL_TIMER) await this.startFallTimer();
-		if (result === PlayerResultEnum.START_JUMP_TIMER) await this.startJumpTimer();
+		if (result.indexOf(PlayerResultEnum.START_FALL_TIMER) > -1) await this.startFallTimer();
+		if (result.indexOf(PlayerResultEnum.START_JUMP_TIMER) > -1) await this.startJumpTimer();
+		if (result.indexOf(PlayerResultEnum.STOP_JUMP_TIMER) > -1) this.stopJumpTimer();
 		if (!game.isGameInPlay) this.stopFallTimer();
 
 		await this.setState(() => ({ game }));
@@ -136,6 +137,7 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 	}
 
 	private startJumpTimer = async (): Promise<void> => {
+		console.log('@@@@@@@@@@@@@@@ START JUMP TIMER @@@@@@@@@@@@@@@@@@@')
 		const jumpTimer = setInterval(this.myJumpTimer, this.state.jumpTimerInterval);
 
 		await this.setState(() => ({ jumpTimer }));
@@ -160,6 +162,7 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 	}
 
 	private stopJumpTimer = async (): Promise<void> => {
+		console.log('################ STOP JUMP TIMER! #################################')
 		clearInterval(this.state.jumpTimer);
 
 		await this.setState(() => ({ jumpTimer: undefined }));
@@ -179,7 +182,7 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 		const game = this.state.game
 		const result = game.handleFallTimer();
 
-		if (result === PlayerResultEnum.STOP_FALL_TIMER) this.stopFallTimer();
+		if (result.indexOf(PlayerResultEnum.STOP_FALL_TIMER) > -1) this.stopFallTimer();
 
 		this.setState(prev => ({ game }));
 	}
@@ -189,7 +192,7 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 		const game = this.state.game
 		const result = game.handleJumpTimer();
 
-		if (result === PlayerResultEnum.STOP_JUMP_TIMER) this.stopJumpTimer();
+		if (result.indexOf(PlayerResultEnum.STOP_JUMP_TIMER) > -1) this.stopJumpTimer();
 
 		this.setState(prev => ({ game }));
 	}

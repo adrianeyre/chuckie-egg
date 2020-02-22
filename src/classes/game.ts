@@ -22,7 +22,7 @@ export default class Game implements IGame {
 		this.levelSetup();
 	}
 
-	public handleInput = (playerResult: PlayerResultEnum, key?: string): PlayerResultEnum => {
+	public handleInput = (playerResult: PlayerResultEnum, key?: string): PlayerResultEnum[] => {
 		switch (playerResult) {
 			case PlayerResultEnum.ARROW_UP:
 				return this.board.movePlayer(DirectionEnum.UP);
@@ -33,10 +33,10 @@ export default class Game implements IGame {
 			case PlayerResultEnum.ARROW_LEFT:
 				return this.board.movePlayer(DirectionEnum.LEFT);
 			case PlayerResultEnum.ENTER:
-				return this.board.player.isJumping ? PlayerResultEnum.SAFE : PlayerResultEnum.START_JUMP_TIMER;
+				return this.board.movePlayer(DirectionEnum.JUMP);
 		}
 
-		return PlayerResultEnum.SAFE;
+		return [];
 	}
 
 	private levelSetup = async (): Promise<void> => {
@@ -47,9 +47,9 @@ export default class Game implements IGame {
 
 	public handleTimer = (): void => {
 		this.board.decreaseTime();
-		if (this.board.time < 1) this.isGameInPlay = false;
+		// if (this.board.time < 1) this.isGameInPlay = false;
 	}
 
-	public handleFallTimer = (): PlayerResultEnum => this.board.movePlayer(DirectionEnum.FALL_DOWN);
-	public handleJumpTimer = (): PlayerResultEnum => this.board.jump();
+	public handleFallTimer = (): PlayerResultEnum[] => this.board.movePlayer(DirectionEnum.FALL_DOWN);
+	public handleJumpTimer = (): PlayerResultEnum[] => this.board.movePlayer(DirectionEnum.JUMP);
 }
