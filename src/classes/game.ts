@@ -16,7 +16,7 @@ export default class Game implements IGame {
 	private HEN_ITERATION: number = 5;
 	
 	constructor(config: IChuckieEggProps) {
-		this.level = config.level || 7;
+		this.level = config.level || 1;
 		this.board = new Board({ level: this.level });
 		this.isGameInPlay = false;
 		this.refreshGameState = config.refreshGameState;
