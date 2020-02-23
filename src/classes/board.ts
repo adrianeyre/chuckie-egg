@@ -1,5 +1,7 @@
 import IBoard from './interfaces/board';
 import IBoardProps from './interfaces/board-props';
+import IHen from './interfaces/hen';
+import Hen from './hen';
 import ISprite from './interfaces/sprite';
 import Sprite from './sprite';
 import SpriteTypeEnum from './enums/sprite-type-enum';
@@ -12,6 +14,7 @@ import PlayerResultEnum from './enums/player-result-enum';
 
 export default class Board implements IBoard {
 	public sprites: ISprite[];
+	public hens: IHen[];
 	public player: IPlayer;
 	public board: number[][];
 	public fileService: IFileService;
@@ -22,6 +25,8 @@ export default class Board implements IBoard {
 	private readonly SPRITE_HEIGHT: number = 1;
 	private readonly PLAYER_WIDTH: number = 2;
 	private readonly PLAYER_HEIGHT: number = 2;
+	private readonly HEN_WIDTH: number = 2;
+	private readonly HEN_HEIGHT: number = 2;
 	private readonly DEFAULT_TIMER_ADD: number = 5;
 	private readonly DEFAULT_TIME_DECREASE: number = 1;
 
@@ -29,6 +34,7 @@ export default class Board implements IBoard {
 		this.fileService = new FileService();
 		this.board = [[]];
 		this.sprites = [];
+		this.hens = [];
 		this.eggs = 0;
 		this.time = 999;
 		this.player = new Player({
@@ -46,6 +52,14 @@ export default class Board implements IBoard {
 
 	public movePlayer = (direction: DirectionEnum): PlayerResultEnum[] => this.handleResult(this.player.move(direction, this.blocksAroundPoint))
 	public decreaseTime = (): number => this.time -= this.DEFAULT_TIME_DECREASE;
+
+	public moveHens = (): PlayerResultEnum[] => {
+		const response: PlayerResultEnum[] = [];
+
+		this.hens.forEach((hen: IHen) => hen.move(this.blocksAroundPoint));
+
+		return response;
+	}
 
 	private blocksAroundPoint = (x: number, y: number) => ({
 		[DirectionEnum.STAND]: y < this.board.length - 1 ? this.board[y+1][x] : undefined,
@@ -100,6 +114,7 @@ export default class Board implements IBoard {
 	public readBoard = async (level: number): Promise<void> => {
 		this.board = await this.fileService.readLevel(level);
 		this.sprites = [];
+		this.hens = [];
 		this.time = 999;
 		let yPos = 0;
 
@@ -110,7 +125,8 @@ export default class Board implements IBoard {
 
 				if (block === SpriteTypeEnum.EGG) this.eggs ++;
 				if (block === SpriteTypeEnum.PLAYER) this.setPlayer(x, y, xPos, yPos);
-				if (block > 1) this.newSprite(x, y, xPos, yPos, block, SpriteTypeEnum.BLANK)
+				if (block === SpriteTypeEnum.HEN) this.newHen(x, y, xPos, yPos, block, SpriteTypeEnum.BLANK)
+				if (block >= SpriteTypeEnum.FLOOR) this.newSprite(x, y, xPos, yPos, block, SpriteTypeEnum.BLANK)
 				xPos++;
 			}
 			yPos ++;
@@ -131,5 +147,17 @@ export default class Board implements IBoard {
 		height: this.SPRITE_HEIGHT,
 		imageIndex: block,
 		type,
+	}))
+
+	private newHen = (x: number, y: number, xPos: number, yPos: number, block: number, type: SpriteTypeEnum): number => this.hens.push(new Hen({
+		key: `hen-${ xPos }-${ yPos }`,
+		visable: true,
+		x,
+		y,
+		xPos,
+		yPos,
+		xOffset: 2,
+		width: this.HEN_WIDTH,
+		height: this.HEN_HEIGHT,
 	}))
 }

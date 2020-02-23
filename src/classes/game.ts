@@ -12,10 +12,11 @@ export default class Game implements IGame {
 	public level: number;
 
 	private refreshGameState: any;
-	private AMOUNT_OF_LEVELS: number = 5;
+	private AMOUNT_OF_LEVELS: number = 7;
+	private HEN_ITERATION: number = 5;
 	
 	constructor(config: IChuckieEggProps) {
-		this.level = config.level || 1;
+		this.level = config.level || 7;
 		this.board = new Board({ level: this.level });
 		this.isGameInPlay = false;
 		this.refreshGameState = config.refreshGameState;
@@ -43,6 +44,8 @@ export default class Game implements IGame {
 	public handleTimer = (): void => {
 		this.board.decreaseTime();
 		if (this.board.time < 1) this.isGameInPlay = false;
+
+		if (this.board.time % this.HEN_ITERATION === 0) this.handleBoardResponse(this.board.moveHens());
 	}
 
 	public handleFallTimer = (): PlayerResultEnum[] => this.handleBoardResponse(this.board.movePlayer(DirectionEnum.FALL_DOWN));

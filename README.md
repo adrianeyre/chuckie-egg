@@ -2,6 +2,8 @@
 
 #### Technologies: TypeScript, React, SCSS
 
+As Hen-House Harry, the player must collect the twelve eggs positioned in each level, before a countdown timer reaches zero. In addition there are piles of seed which may be collected to increase points and stop the countdown timer for a while, but will otherwise be eaten by hens that patrol the level, causing them to pause. If the player touches a hen or falls through a gap in the bottom of the level, he loses a life. Each level is made of solid platforms, ladders and occasionally lift platforms that constantly move upwards but upon leaving the top of the screen will reappear at the bottom. Hitting the top of the screen while on one of these lifts, however, will also cause the player to lose a life.
+
 ## Index
 * [Installation and Run](#Install)
 * [Screen Shots](#Shots)
