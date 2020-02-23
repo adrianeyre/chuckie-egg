@@ -24,6 +24,7 @@ export default class Hen implements IHen {
 	private readonly Z_INDEX: number = 5000;
 	private readonly images = henImagesData.default;
 	private imageIteration: number = 0;
+	private originalWidth: number = 1;
 
 	constructor(config: IHenProps) {
 		this.key = config.key;
@@ -34,6 +35,7 @@ export default class Hen implements IHen {
 		this.yPos = config.yPos;
 		this.width = config.width;
 		this.height = config.height;
+		this.originalWidth = config.width
 		this.xOffset = config.xOffset;
 		this.zIndex = this.Z_INDEX;
 		this.direction = DirectionEnum.RIGHT;
@@ -41,8 +43,6 @@ export default class Hen implements IHen {
 	}
 
 	public move = (blocksAroundPoint: any): PlayerResultEnum[] => {
-		const response: PlayerResultEnum[] = [];
-
 		let x = this.xPos;
 		let y = this.yPos;
 		const isOnBlock = !Number.isInteger(this.x / 2)
@@ -52,8 +52,36 @@ export default class Hen implements IHen {
 		if (result.indexOf(PlayerResultEnum.SAFE) > -1) this.updateValidMove();
 		if (result.indexOf(PlayerResultEnum.HEN_COULD_CHANGING_DIRECTION) > -1) this.randomChangeDirection(blocksAroundHen);
 		if (result.indexOf(PlayerResultEnum.HEN_CHANGING_DIRECTION) > -1) this.updateDirection(blocksAroundHen);
+		if (this.direction === DirectionEnum.RIGHT && result.indexOf(PlayerResultEnum.HEN_EATING) > -1) this.setEatRight();
+		if (this.direction === DirectionEnum.LEFT && result.indexOf(PlayerResultEnum.HEN_EATING) > -1) this.setEatLeft();
+		if (this.direction === DirectionEnum.EATING_RIGHT || this.direction === DirectionEnum.EATING_LEFT) result.push(this.eatFood());
 
-		return response;
+		return result;
+	}
+
+	private eatFood = (): PlayerResultEnum => {
+		this.updateImage();
+		if (this.direction === DirectionEnum.EATING_RIGHT && this.imageIteration === 1) return PlayerResultEnum.COLLECT_FOOD;
+		if (this.direction === DirectionEnum.EATING_LEFT && this.imageIteration === 1) return PlayerResultEnum.COLLECT_FOOD;
+		
+		if (this.direction === DirectionEnum.EATING_RIGHT && this.imageIteration === this.images[this.direction].length - 1) this.direction = DirectionEnum.RIGHT;
+		if (this.direction === DirectionEnum.EATING_LEFT && this.imageIteration === this.images[this.direction].length - 1) this.direction = DirectionEnum.LEFT;
+
+		return PlayerResultEnum.SAFE;
+	}
+
+	private setEatRight = (): void => {
+		this.imageIteration = -1;
+		this.width = this.originalWidth * 2;
+		this.direction = DirectionEnum.EATING_RIGHT;
+	}
+
+	private setEatLeft = (): void => {
+		this.imageIteration = -1;
+		this.width = this.originalWidth * 2;
+		this.x --;
+		this.xPos = Math.floor(this.x / 2);
+		this.direction = DirectionEnum.EATING_LEFT;
 	}
 
 	private randomChangeDirection = (blocksAroundHen: IBlockPosition): void => {
@@ -81,6 +109,7 @@ export default class Hen implements IHen {
 				this.x --; break;
 		}
 
+		this.width = this.originalWidth
 		this.xPos = Math.floor(this.x / 2);
 		this.yPos = this.y - 1;
 		this.updateImage();
@@ -132,6 +161,8 @@ export default class Hen implements IHen {
 	}
 
 	private checkRight = (blocksAroundHen: IBlockPosition, isOnBlock: boolean): PlayerResultEnum => {
+		if (isOnBlock && blocksAroundHen[DirectionEnum.FLOOR_RIGHT] === SpriteTypeEnum.FOOD) return PlayerResultEnum.HEN_EATING;
+
 		if (
 			(isOnBlock && blocksAroundHen[DirectionEnum.RIGHT] === undefined) ||
 			(isOnBlock && blocksAroundHen[DirectionEnum.DOWN_RIGHT] === SpriteTypeEnum.BLANK) ||
@@ -151,6 +182,8 @@ export default class Hen implements IHen {
 	}
 
 	private checkLeft = (x: number, blocksAroundHen: IBlockPosition, isOnBlock: boolean): PlayerResultEnum => {
+		if (isOnBlock && blocksAroundHen[DirectionEnum.FLOOR_LEFT] === SpriteTypeEnum.FOOD) return PlayerResultEnum.HEN_EATING;
+
 		if (
 			x < 0 ||
 			(isOnBlock && blocksAroundHen[DirectionEnum.DOWN_LEFT] === SpriteTypeEnum.BLANK) ||

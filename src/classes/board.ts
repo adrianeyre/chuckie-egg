@@ -54,9 +54,15 @@ export default class Board implements IBoard {
 	public decreaseTime = (): number => this.time -= this.DEFAULT_TIME_DECREASE;
 
 	public moveHens = (): PlayerResultEnum[] => {
-		const response: PlayerResultEnum[] = [];
+		let response: PlayerResultEnum[] = [];
 
-		this.hens.forEach((hen: IHen) => hen.move(this.blocksAroundPoint));
+		this.hens.forEach((hen: IHen) => {
+			const henResponse = hen.move(this.blocksAroundPoint)
+			response = response.concat(henResponse);
+
+			if (henResponse.indexOf(PlayerResultEnum.COLLECT_FOOD) && hen.direction === DirectionEnum.EATING_RIGHT) this.collectFood(hen.xPos + 1, hen.yPos + 1);
+			if (henResponse.indexOf(PlayerResultEnum.COLLECT_FOOD) && hen.direction === DirectionEnum.EATING_LEFT) this.collectFood(hen.xPos - 1, hen.yPos + 1);
+		});
 
 		return response;
 	}
@@ -79,7 +85,7 @@ export default class Board implements IBoard {
 	private handleResult = (result: PlayerResultEnum[]): PlayerResultEnum[] => {
 		if (result.indexOf(PlayerResultEnum.COLLECT_EGG_AT_FEET) > -1) result.push(this.collectEgg(PlayerResultEnum.COLLECT_EGG_AT_FEET));
 		if (result.indexOf(PlayerResultEnum.COLLECT_EGG_AT_HEAD) > -1) result.push(this.collectEgg(PlayerResultEnum.COLLECT_EGG_AT_HEAD));
-		if (result.indexOf(PlayerResultEnum.COLLECT_FOOD) > -1) this.collectFood();
+		if (result.indexOf(PlayerResultEnum.COLLECT_FOOD) > -1) this.collectFood(this.player.xPos, this.player.yPos + 1);
 
 		return result;
 	}
@@ -99,14 +105,14 @@ export default class Board implements IBoard {
 		return PlayerResultEnum.SAFE;
 	}
 
-	private collectFood = (): void => {
-		const sprite = this.sprites.find((s: ISprite) => s.key === `sprite-${ this.player.xPos }-${ this.player.yPos + 1 }`)
-		if (!sprite) throw Error(`Food not found in position x: ${ this.player.xPos }, y: ${ this.player.yPos + 1 }`)
+	private collectFood = (x: number, y: number): void => {
+		const sprite = this.sprites.find((s: ISprite) => s.key === `sprite-${ x }-${ y }`)
+		if (!sprite) throw Error(`Food not found in position x: ${ x }, y: ${ y }`)
 
 		sprite.visable = false;
 		this.time += this.DEFAULT_TIMER_ADD;
 
-		this.board[this.player.yPos + 1][this.player.xPos] = SpriteTypeEnum.BLANK;
+		this.board[y][x] = SpriteTypeEnum.BLANK;
 
 		return;
 	}
