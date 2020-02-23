@@ -6,13 +6,8 @@ import SpriteTypeEnum from './enums/sprite-type-enum';
 import IBlockPosition from './interfaces/block-position';
 import IJumpMatrix from './interfaces/jump-matrix';
 
-import playerRightStood from '../images/player-right-stood.png';
-import playerRight from '../images/player-right.png';
-import playerLeftStood from '../images/player-left-stood.png';
-import playerLeft from '../images/player-left.png';
-import playerUp1 from '../images/player-up-1.png';
-import playerUp2 from '../images/player-up-2.png';
-import playerUp3 from '../images/player-up-3.png';
+import * as jumpMatrixData from './data/jump-matrix';
+import * as playerImagesData from './data/player-images';
 
 export default class Player implements IPlayer {
 	public key: string;
@@ -38,43 +33,8 @@ export default class Player implements IPlayer {
 	private readonly DEFAULT_FOOD_SCORE: number = 10;
 	private imageIteration: number = 0;
 	private jumpIteration: number = 0;
-	private images = {
-		[DirectionEnum.STAND]: [playerRightStood],
-		[DirectionEnum.UP]: [playerUp1, playerUp2, playerUp1, playerUp3],
-		[DirectionEnum.UP_RIGHT]: [],
-		[DirectionEnum.RIGHT]: [playerRightStood, playerRight],
-		[DirectionEnum.DOWN_RIGHT]: [],
-		[DirectionEnum.DOWN]: [playerUp1, playerUp2, playerUp1, playerUp3],
-		[DirectionEnum.DOWN_LEFT]: [],
-		[DirectionEnum.LEFT]: [playerLeftStood, playerLeft],
-		[DirectionEnum.UP_LEFT]: [],
-		[DirectionEnum.FLOOR_RIGHT]: [],
-		[DirectionEnum.FLOOR_LEFT]: [],
-		[DirectionEnum.FALL_DOWN]: [playerRightStood],
-		[DirectionEnum.JUMP]: [],
-	}
-	private jumpMatrix: IJumpMatrix = {
-		// [DirectionEnum.STAND]: [[0, -1], [0, -1], [0, 1], [0, 1], [0, 0]],
-		[DirectionEnum.UP]: [
-			{ direction: DirectionEnum.UP, x: 0, y: -1 },
-			{ direction: DirectionEnum.UP, x: 0, y: -1 },
-			{ direction: DirectionEnum.DOWN, x: 0, y: 1 },
-			{ direction: DirectionEnum.DOWN, x: 0, y: 1 },
-			{ direction: DirectionEnum.DOWN, x: 0, y: 0 },
-		],
-		[DirectionEnum.RIGHT]: [
-			{ direction: DirectionEnum.UP, x: 0, y: -1 },
-			{ direction: DirectionEnum.UP, x: 1, y: -1 },
-			{ direction: DirectionEnum.UP, x: 1, y: -1 },
-			{ direction: DirectionEnum.DOWN, x: 1, y: 1 },
-		],
-		[DirectionEnum.LEFT]: [
-			{ direction: DirectionEnum.UP, x: -1, y: -1 },
-			{ direction: DirectionEnum.UP, x: -1, y: -1 },
-			{ direction: DirectionEnum.DOWN, x: -1, y: 1 },
-		],
-		// [DirectionEnum.FALL_DOWN]: [[0, 0]],
-	}
+	private images = playerImagesData.default;
+	private jumpMatrix: IJumpMatrix = jumpMatrixData.default;
 
 	constructor(config: IPlayerConfig) {
 		this.key = config.key;
@@ -114,6 +74,13 @@ export default class Player implements IPlayer {
 		this.checkForFood(blocksAroundPlayer, isOnBlock, result.outcome);
 
 		return result.outcome;
+	}
+
+	public setStart = (x: number, y: number, xPos: number, yPos: number): void => {
+		this.x = x;
+		this.y = y;
+		this.xPos = xPos;
+		this.yPos = yPos;
 	}
 
 	private checkIfDirectionValid = (direction: DirectionEnum, x: number, y: number, blocksAroundPoint: any, isOnBlock: boolean): any => {
@@ -157,45 +124,46 @@ export default class Player implements IPlayer {
 
 	private jump = (x: number, y: number, blocksAroundPoint: any): any => {
 		let result = { validMove: false, outcome: this.isJumping ? [] : [PlayerResultEnum.START_JUMP_TIMER] }
-		if (this.isFalling) return result;
+		if (this.isFalling || this.direction === DirectionEnum.FALL_DOWN) return result;
 
 		const matrix = this.jumpMatrix[this.direction];
 		if (!matrix) throw Error(`No jump matrix found for direction id: ${ this.direction }`);
 
 		this.isJumping = true;
-		// const isOnBlock = !Number.isInteger(this.x / 2)
-		
 		if (this.jumpIteration > matrix.length - 1) this.jumpIteration = matrix.length - 1;
-		console.log(`this.jumpIteration = ${this.jumpIteration}`)
+
 		const nextMove = matrix[this.jumpIteration];
 		const lastMove = nextMove.x === 0 && nextMove.y === 0;
+		const originalBlocksAroundPlayer = blocksAroundPoint(x, y);
+		let blockInWay = false;
+
+		if (this.direction !== DirectionEnum.DOWN && originalBlocksAroundPlayer[DirectionEnum.RIGHT] === SpriteTypeEnum.FLOOR && originalBlocksAroundPlayer[DirectionEnum.LEFT] === SpriteTypeEnum.FLOOR) {
+			this.direction = DirectionEnum.DOWN;
+			return this.jump(x, y, blocksAroundPoint);
+		}
+
+		switch (this.direction) {
+			case DirectionEnum.RIGHT:
+				blockInWay =
+					originalBlocksAroundPlayer[DirectionEnum.FLOOR_RIGHT] === undefined ||
+					(originalBlocksAroundPlayer[DirectionEnum.FLOOR_RIGHT] === SpriteTypeEnum.FLOOR && this.jumpIteration > 0) ||
+					originalBlocksAroundPlayer[DirectionEnum.RIGHT] === SpriteTypeEnum.FLOOR;
+				break;
+			case DirectionEnum.LEFT:
+				blockInWay =
+					originalBlocksAroundPlayer[DirectionEnum.FLOOR_LEFT] === undefined ||
+					(originalBlocksAroundPlayer[DirectionEnum.FLOOR_LEFT] === SpriteTypeEnum.FLOOR && this.jumpIteration > 0) ||
+					originalBlocksAroundPlayer[DirectionEnum.LEFT] === SpriteTypeEnum.FLOOR;
+				break;
+		}
+
+		if (blockInWay) {
+			this.resetDirection();
+			return this.jump(x, y, blocksAroundPoint);
+		}
 
 		x += nextMove.x;
 		y += nextMove.y;
-
-		console.log(`x: ${x}, y: ${y}`)
-
-		// if (lastMove || this.isBlock(x, y, board)) {//} || this.isLadder(x, y, board)) {
-		// 	this.isJumping = false;
-		// 	this.jumpIteration = 0;
-		// 	console.log('LANDED')
-		// 	result.outcome = PlayerResultEnum.STOP_JUMP_TIMER;
-		// 	return result
-		// }
-
-		// let blockInWay = false
-		// switch (this.direction) {
-		// 	case DirectionEnum.RIGHT:
-		// 		blockInWay = x > board[0].length - 1 || this.blockInFrontToRight(x, y, board); break;
-		// 	case DirectionEnum.LEFT:
-		// 		blockInWay = x < 1 || this.blockInFrontToLeft(x, y, board); break;
-		// }
-
-		// if (blockInWay) {
-		// 	console.log('BLOCK IN WAY!!!!!!!!!!!')
-		// 	this.resetDirection();
-		// 	return this.jump(x, y, board);
-		// }
 
 		this.xPos = x;
 		this.yPos = y;
@@ -214,19 +182,22 @@ export default class Player implements IPlayer {
 			return result
 		}
 
+		const blockAbove = blocksAroundPlayer[DirectionEnum.UP] === undefined || blocksAroundPlayer[DirectionEnum.UP] === SpriteTypeEnum.FLOOR;
+		if (blockAbove) this.jumpIteration++;
+
 		this.jumpIteration++;
 
 		return result;
 	}
 
-	// private resetDirection = () => {
-	// 	switch (this.direction) {
-	// 		case DirectionEnum.RIGHT:
-	// 			this.direction = DirectionEnum.LEFT; break;
-	// 		case DirectionEnum.LEFT:
-	// 			this.direction = DirectionEnum.RIGHT; break;
-	// 	}
-	// }
+	private resetDirection = () => {
+		switch (this.direction) {
+			case DirectionEnum.RIGHT:
+				this.direction = DirectionEnum.LEFT; break;
+			case DirectionEnum.LEFT:
+				this.direction = DirectionEnum.RIGHT; break;
+		}
+	}
 
 	private updateImage = (): void => {
 		this.imageIteration ++;
@@ -261,18 +232,14 @@ export default class Player implements IPlayer {
 		const notFloorSpaceBelow = blocksAroundPlayer[DirectionEnum.DOWN] !== SpriteTypeEnum.FLOOR;
 		const ladderSpaceBelow = blocksAroundPlayer[DirectionEnum.DOWN] === SpriteTypeEnum.LADDER;
 		this.isFalling = !isOnBlock && notFloorSpaceBelow && !ladderSpaceBelow
-		console.log(`notFloorSpaceBelow = ${notFloorSpaceBelow}, ladderSpaceBelow = ${ladderSpaceBelow}, isFalling = ${this.isFalling}`)
 
 		const blockBelowNotBlank = blocksAroundPlayer[DirectionEnum.DOWN] !== SpriteTypeEnum.BLANK;
 		const blockNextToLadder = blocksAroundPlayer[DirectionEnum.DOWN_RIGHT] === SpriteTypeEnum.FLOOR;
-		const canMoveRight = ladderSpaceBelow ? blockBelowNotBlank && blockNextToLadder : blockBelowNotBlank;
-		console.log(`blockBelowNotBlank = ${blockBelowNotBlank}, blockNextToLadder = ${blockNextToLadder}, ladderSpaceBelow = ${ladderSpaceBelow}, canMoveRight = ${canMoveRight}`)
+		const canMoveRight = isOnBlock && ladderSpaceBelow ? blockBelowNotBlank && blockNextToLadder : blockBelowNotBlank;
 		
 		const blockInfront = isOnBlock && blocksAroundPlayer[DirectionEnum.FLOOR_RIGHT] === SpriteTypeEnum.FLOOR;
-		console.log(`blockInfront = ${blockInfront}`)
 
 		const validMove = (canMoveRight || this.isFalling) && !blockInfront;
-		console.log(`validMove = ${validMove}`)
 		return { validMove, outcome: this.isFalling ? [PlayerResultEnum.START_FALL_TIMER] : outcome }
 	}
 
@@ -283,7 +250,6 @@ export default class Player implements IPlayer {
 
 		const notFloorSpaceBelow = blocksAroundPlayer[DirectionEnum.DOWN_LEFT] !== SpriteTypeEnum.FLOOR;
 		const ladderSpaceBelow = isOnBlock && blocksAroundPlayer[DirectionEnum.DOWN] === SpriteTypeEnum.LADDER;
-		// this.isFalling = isOnBlock && blankSpaceBelow && !ladderSpaceBelow
 		this.isFalling = notFloorSpaceBelow && !ladderSpaceBelow
 
 		const blockBelowNotBlank = blocksAroundPlayer[DirectionEnum.DOWN] !== SpriteTypeEnum.BLANK;
@@ -302,7 +268,12 @@ export default class Player implements IPlayer {
 			(!isOnBlock && blocksAroundPlayer[DirectionEnum.STAND] === SpriteTypeEnum.EGG)
 		) {
 			this.score += this.DEFAULT_EGG_SCORE;
-			outcome.push(PlayerResultEnum.COLLECT_EGG);
+			outcome.push(PlayerResultEnum.COLLECT_EGG_AT_FEET);
+		}
+
+		if (blocksAroundPlayer[DirectionEnum.HEAD] === SpriteTypeEnum.EGG) {
+			this.score += this.DEFAULT_EGG_SCORE;
+			outcome.push(PlayerResultEnum.COLLECT_EGG_AT_HEAD);
 		}
 
 		return outcome;

@@ -29,52 +29,63 @@ export default class Board implements IBoard {
 		this.fileService = new FileService();
 		this.board = [[]];
 		this.sprites = [];
-		this.player = this.setPlayer(1, 1, 1, 1);
 		this.eggs = 0;
 		this.time = 999;
+		this.player = new Player({
+			key: 'player',
+			visable: true,
+			x: 1,
+			y: 1,
+			xPos: 1,
+			yPos: 1,
+			xOffset: 1,
+			height: this.PLAYER_HEIGHT,
+			width: this.PLAYER_WIDTH,
+		})
 	}
 
 	public movePlayer = (direction: DirectionEnum): PlayerResultEnum[] => this.handleResult(this.player.move(direction, this.blocksAroundPoint))
 	public decreaseTime = (): number => this.time -= this.DEFAULT_TIME_DECREASE;
 
 	private blocksAroundPoint = (x: number, y: number) => ({
-		[DirectionEnum.STAND]: this.board[y+1][x],
-		[DirectionEnum.UP]: this.board[y-1][x],
-		[DirectionEnum.UP_RIGHT]: this.board[y-1][x+1],
-		[DirectionEnum.RIGHT]: this.board[y][x+1],
-		[DirectionEnum.FLOOR_RIGHT]: this.board[y+1][x+1],
-		[DirectionEnum.DOWN_RIGHT]: this.board[y+2][x+1],
-		[DirectionEnum.DOWN]: this.board[y+2][x],
-		[DirectionEnum.DOWN_LEFT]: this.board[y+2][x-1],
-		[DirectionEnum.FLOOR_LEFT]: this.board[y+1][x-1],
-		[DirectionEnum.LEFT]: this.board[y][x-1],
-		[DirectionEnum.UP_LEFT]: this.board[y-1][x-1],
+		[DirectionEnum.STAND]: y < this.board.length - 1 ? this.board[y+1][x] : undefined,
+		[DirectionEnum.UP]: y >= 1 ? this.board[y-1][x] : undefined,
+		[DirectionEnum.UP_RIGHT]: y >= 1 && x < this.board[0].length - 1 ? this.board[y-1][x+1] : undefined,
+		[DirectionEnum.RIGHT]: x < this.board[0].length - 1 ? this.board[y][x+1] : undefined,
+		[DirectionEnum.FLOOR_RIGHT]: y < this.board.length - 1 && x < this.board[0].length - 1 ? this.board[y+1][x+1] : undefined,
+		[DirectionEnum.DOWN_RIGHT]: y < this.board.length - 2 && x < this.board[0].length - 1 ? this.board[y+2][x+1] : undefined,
+		[DirectionEnum.DOWN]: y < this.board.length - 2 ? this.board[y+2][x] : undefined,
+		[DirectionEnum.DOWN_LEFT]: y < this.board.length - 2 && x >= 1 ? this.board[y+2][x-1] : undefined,
+		[DirectionEnum.FLOOR_LEFT]: y < this.board.length - 1 && x >= 1 ? this.board[y+1][x-1] : undefined,
+		[DirectionEnum.LEFT]: x >= 1 ? this.board[y][x-1] : undefined,
+		[DirectionEnum.UP_LEFT]: y >= 1 && x >= 1 ? this.board[y-1][x-1] : undefined,
+		[DirectionEnum.HEAD]: this.board[y][x],
 	})
 
 	private handleResult = (result: PlayerResultEnum[]): PlayerResultEnum[] => {
-		console.log('################################################')
-		console.log(result);
-
-		if (result.indexOf(PlayerResultEnum.COLLECT_EGG) > -1) this.collectEgg();
+		if (result.indexOf(PlayerResultEnum.COLLECT_EGG_AT_FEET) > -1) result.push(this.collectEgg(PlayerResultEnum.COLLECT_EGG_AT_FEET));
+		if (result.indexOf(PlayerResultEnum.COLLECT_EGG_AT_HEAD) > -1) result.push(this.collectEgg(PlayerResultEnum.COLLECT_EGG_AT_HEAD));
 		if (result.indexOf(PlayerResultEnum.COLLECT_FOOD) > -1) this.collectFood();
 
 		return result;
 	}
 
-	private collectEgg = (): PlayerResultEnum => {
-		const sprite = this.sprites.find((s: ISprite) => s.key === `sprite-${ this.player.xPos }-${ this.player.yPos + 1 }`)
-		if (!sprite) throw Error(`Egg not found in position x: ${ this.player.xPos }, y: ${ this.player.yPos + 1}`)
+	private collectEgg = (result: PlayerResultEnum): PlayerResultEnum => {
+		const y = result === PlayerResultEnum.COLLECT_EGG_AT_FEET ? this.player.yPos + 1 : this.player.yPos;
+
+		const sprite = this.sprites.find((s: ISprite) => s.key === `sprite-${ this.player.xPos }-${ y }`)
+		if (!sprite) throw Error(`Egg not found in position x: ${ this.player.xPos }, y: ${ y }`)
 
 		sprite.visable = false;
 		this.eggs --;
 
-		this.board[this.player.yPos + 1][this.player.xPos] = SpriteTypeEnum.BLANK;
-
+		this.board[y][this.player.xPos] = SpriteTypeEnum.BLANK;
 		if (this.eggs < 1) return PlayerResultEnum.LEVEL_COMPLETE;
+
 		return PlayerResultEnum.SAFE;
 	}
 
-	private collectFood = (): PlayerResultEnum => {
+	private collectFood = (): void => {
 		const sprite = this.sprites.find((s: ISprite) => s.key === `sprite-${ this.player.xPos }-${ this.player.yPos + 1 }`)
 		if (!sprite) throw Error(`Food not found in position x: ${ this.player.xPos }, y: ${ this.player.yPos + 1 }`)
 
@@ -83,12 +94,13 @@ export default class Board implements IBoard {
 
 		this.board[this.player.yPos + 1][this.player.xPos] = SpriteTypeEnum.BLANK;
 
-		return PlayerResultEnum.SAFE;
+		return;
 	}
 
 	public readBoard = async (level: number): Promise<void> => {
 		this.board = await this.fileService.readLevel(level);
 		this.sprites = [];
+		this.time = 999;
 		let yPos = 0;
 
 		for (let y = 1; y <= this.board.length; y++) {
@@ -97,7 +109,7 @@ export default class Board implements IBoard {
 				const block = this.board[yPos][xPos];
 
 				if (block === SpriteTypeEnum.EGG) this.eggs ++;
-				if (block === SpriteTypeEnum.PLAYER) this.player = this.setPlayer(x, y, xPos, yPos);
+				if (block === SpriteTypeEnum.PLAYER) this.setPlayer(x, y, xPos, yPos);
 				if (block > 1) this.newSprite(x, y, xPos, yPos, block, SpriteTypeEnum.BLANK)
 				xPos++;
 			}
@@ -105,17 +117,7 @@ export default class Board implements IBoard {
 		}
 	}
 
-	private setPlayer = (x: number, y: number, xPos: number, yPos: number): IPlayer => new Player({
-		key: 'player',
-		visable: true,
-		x,
-		y,
-		xPos,
-		yPos,
-		xOffset: 1,
-		height: this.PLAYER_HEIGHT,
-		width: this.PLAYER_WIDTH,
-	})
+	private setPlayer = (x: number, y: number, xPos: number, yPos: number): void => this.player.setStart(x, y, xPos, yPos);
 
 	private newSprite = (x: number, y: number, xPos: number, yPos: number, block: number, type: SpriteTypeEnum): number => this.sprites.push(new Sprite({
 		key: `sprite-${ xPos }-${ yPos }`,

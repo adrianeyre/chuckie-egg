@@ -12,6 +12,7 @@ export default class Game implements IGame {
 	public level: number;
 
 	private refreshGameState: any;
+	private AMOUNT_OF_LEVELS: number = 5;
 	
 	constructor(config: IChuckieEggProps) {
 		this.level = config.level || 1;
@@ -22,22 +23,30 @@ export default class Game implements IGame {
 		this.levelSetup();
 	}
 
-	public handleInput = (playerResult: PlayerResultEnum, key?: string): PlayerResultEnum[] => {
+	public handleInput = (playerResult: PlayerResultEnum): PlayerResultEnum[] => {
 		switch (playerResult) {
 			case PlayerResultEnum.ARROW_UP:
-				return this.board.movePlayer(DirectionEnum.UP);
+				return this.handleBoardResponse(this.board.movePlayer(DirectionEnum.UP));
 			case PlayerResultEnum.ARROW_RIGHT:
-				return this.board.movePlayer(DirectionEnum.RIGHT);
+				return this.handleBoardResponse(this.board.movePlayer(DirectionEnum.RIGHT));
 			case PlayerResultEnum.ARROW_DOWN:
-				return this.board.movePlayer(DirectionEnum.DOWN);
+				return this.handleBoardResponse(this.board.movePlayer(DirectionEnum.DOWN));
 			case PlayerResultEnum.ARROW_LEFT:
-				return this.board.movePlayer(DirectionEnum.LEFT);
+				return this.handleBoardResponse(this.board.movePlayer(DirectionEnum.LEFT));
 			case PlayerResultEnum.ENTER:
-				return this.board.movePlayer(DirectionEnum.JUMP);
+				return this.handleBoardResponse(this.board.movePlayer(DirectionEnum.JUMP));
 		}
 
 		return [];
 	}
+
+	public handleTimer = (): void => {
+		this.board.decreaseTime();
+		if (this.board.time < 1) this.isGameInPlay = false;
+	}
+
+	public handleFallTimer = (): PlayerResultEnum[] => this.handleBoardResponse(this.board.movePlayer(DirectionEnum.FALL_DOWN));
+	public handleJumpTimer = (): PlayerResultEnum[] => this.handleBoardResponse(this.board.movePlayer(DirectionEnum.JUMP));
 
 	private levelSetup = async (): Promise<void> => {
 		await this.board.readBoard(this.level);
@@ -45,11 +54,13 @@ export default class Game implements IGame {
 		this.refreshGameState();
 	}
 
-	public handleTimer = (): void => {
-		this.board.decreaseTime();
-		// if (this.board.time < 1) this.isGameInPlay = false;
-	}
+	private handleBoardResponse = (response: PlayerResultEnum[]): PlayerResultEnum[] => {
+		if (response.indexOf(PlayerResultEnum.LEVEL_COMPLETE) > -1) {
+			this.level ++;
+			if (this.level > this.AMOUNT_OF_LEVELS) this.level = 1;
+			this.board.readBoard(this.level);
+		}
 
-	public handleFallTimer = (): PlayerResultEnum[] => this.board.movePlayer(DirectionEnum.FALL_DOWN);
-	public handleJumpTimer = (): PlayerResultEnum[] => this.board.movePlayer(DirectionEnum.JUMP);
+		return response;
+	}
 }

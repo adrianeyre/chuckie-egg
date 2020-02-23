@@ -10,8 +10,9 @@ enum DirectionEnum {
 	UP_LEFT = 8,
 	FLOOR_RIGHT = 9,
 	FLOOR_LEFT = 10,
-	FALL_DOWN = 11,
-	JUMP = 12,
+	HEAD = 11,
+	FALL_DOWN = 12,
+	JUMP = 13,
 }
 
 export default DirectionEnum;
