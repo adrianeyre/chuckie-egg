@@ -2,6 +2,8 @@ import IBoard from './interfaces/board';
 import IBoardProps from './interfaces/board-props';
 import IHen from './interfaces/hen';
 import Hen from './hen';
+import ILift from './interfaces/lift';
+import Lift from './lift';
 import ISprite from './interfaces/sprite';
 import Sprite from './sprite';
 import SpriteTypeEnum from './enums/sprite-type-enum';
@@ -15,6 +17,7 @@ import PlayerResultEnum from './enums/player-result-enum';
 export default class Board implements IBoard {
 	public sprites: ISprite[];
 	public hens: IHen[];
+	public lifts: ILift[];
 	public player: IPlayer;
 	public board: number[][];
 	public fileService: IFileService;
@@ -27,6 +30,8 @@ export default class Board implements IBoard {
 	private readonly PLAYER_HEIGHT: number = 2;
 	private readonly HEN_WIDTH: number = 2;
 	private readonly HEN_HEIGHT: number = 2;
+	private readonly LIFT_WIDTH: number = 4;
+	private readonly LIFT_HEIGHT: number = 1;
 	private readonly DEFAULT_TIMER_ADD: number = 5;
 	private readonly DEFAULT_TIME_DECREASE: number = 1;
 
@@ -35,6 +40,7 @@ export default class Board implements IBoard {
 		this.board = [[]];
 		this.sprites = [];
 		this.hens = [];
+		this.lifts = [];
 		this.eggs = 0;
 		this.time = 999;
 		this.player = new Player({
@@ -60,11 +66,49 @@ export default class Board implements IBoard {
 			const henResponse = hen.move(this.blocksAroundPoint)
 			response = response.concat(henResponse);
 
+			if (hen.xPos === this.player.xPos && hen.yPos === this.player.yPos) response.push(PlayerResultEnum.LOOSE_LIFE)
 			if (henResponse.indexOf(PlayerResultEnum.COLLECT_FOOD) && hen.direction === DirectionEnum.EATING_RIGHT) this.collectFood(hen.xPos + 1, hen.yPos + 1);
 			if (henResponse.indexOf(PlayerResultEnum.COLLECT_FOOD) && hen.direction === DirectionEnum.EATING_LEFT) this.collectFood(hen.xPos - 1, hen.yPos + 1);
 		});
 
 		return response;
+	}
+
+	public moveLifts = (): PlayerResultEnum[] => {
+		let response: PlayerResultEnum[] = [];
+
+		this.lifts.forEach((lift: ILift) => {
+			const liftResponse = lift.move(this.player.xPos, this.player.yPos, this.board.length);
+			response = response.concat(liftResponse);
+
+			if (liftResponse.indexOf(PlayerResultEnum.LIFT_MOVE_PLAYER) > -1) this.handleResult(this.player.move(DirectionEnum.LIFT_UP, this.blocksAroundPoint))
+		});
+
+		return response;
+	}
+
+	public readBoard = async (level: number, initialSetup: boolean): Promise<void> => {
+		if (initialSetup) this.board = await this.fileService.readLevel(level);
+		this.sprites = [];
+		this.hens = [];
+		this.lifts = [];
+		this.time = 999;
+		let yPos = 0;
+
+		for (let y = 1; y <= this.board.length; y++) {
+			let xPos = 0;
+			for (let x = 1; x <= this.board[0].length * 2; x += 2) {
+				const block = this.board[yPos][xPos];
+
+				if (block === SpriteTypeEnum.EGG) this.eggs ++;
+				if (block === SpriteTypeEnum.PLAYER) this.setPlayer(x, y, xPos, yPos);
+				if (block === SpriteTypeEnum.HEN) this.newHen(x, y, xPos, yPos, block, SpriteTypeEnum.BLANK)
+				if (block === SpriteTypeEnum.LIFT) this.newLift(x, y, xPos, yPos);
+				if (block >= SpriteTypeEnum.FLOOR) this.newSprite(x, y, xPos, yPos, block, SpriteTypeEnum.BLANK)
+				xPos++;
+			}
+			yPos ++;
+		}
 	}
 
 	private blocksAroundPoint = (x: number, y: number) => ({
@@ -86,6 +130,10 @@ export default class Board implements IBoard {
 		if (result.indexOf(PlayerResultEnum.COLLECT_EGG_AT_FEET) > -1) result.push(this.collectEgg(PlayerResultEnum.COLLECT_EGG_AT_FEET));
 		if (result.indexOf(PlayerResultEnum.COLLECT_EGG_AT_HEAD) > -1) result.push(this.collectEgg(PlayerResultEnum.COLLECT_EGG_AT_HEAD));
 		if (result.indexOf(PlayerResultEnum.COLLECT_FOOD) > -1) this.collectFood(this.player.xPos, this.player.yPos + 1);
+
+		this.hens.forEach((hen: IHen) => {
+			if (hen.xPos === this.player.xPos && hen.yPos === this.player.yPos) result.push(PlayerResultEnum.LOOSE_LIFE);
+		});
 
 		return result;
 	}
@@ -117,28 +165,6 @@ export default class Board implements IBoard {
 		return;
 	}
 
-	public readBoard = async (level: number): Promise<void> => {
-		this.board = await this.fileService.readLevel(level);
-		this.sprites = [];
-		this.hens = [];
-		this.time = 999;
-		let yPos = 0;
-
-		for (let y = 1; y <= this.board.length; y++) {
-			let xPos = 0;
-			for (let x = 1; x <= this.board[0].length * 2; x += 2) {
-				const block = this.board[yPos][xPos];
-
-				if (block === SpriteTypeEnum.EGG) this.eggs ++;
-				if (block === SpriteTypeEnum.PLAYER) this.setPlayer(x, y, xPos, yPos);
-				if (block === SpriteTypeEnum.HEN) this.newHen(x, y, xPos, yPos, block, SpriteTypeEnum.BLANK)
-				if (block >= SpriteTypeEnum.FLOOR) this.newSprite(x, y, xPos, yPos, block, SpriteTypeEnum.BLANK)
-				xPos++;
-			}
-			yPos ++;
-		}
-	}
-
 	private setPlayer = (x: number, y: number, xPos: number, yPos: number): void => this.player.setStart(x, y, xPos, yPos);
 
 	private newSprite = (x: number, y: number, xPos: number, yPos: number, block: number, type: SpriteTypeEnum): number => this.sprites.push(new Sprite({
@@ -165,5 +191,17 @@ export default class Board implements IBoard {
 		xOffset: 2,
 		width: this.HEN_WIDTH,
 		height: this.HEN_HEIGHT,
+	}))
+
+	private newLift = (x: number, y: number, xPos: number, yPos: number): number => this.lifts.push(new Lift({
+		key: `lift-${ xPos }-${ yPos }`,
+		visable: true,
+		x,
+		y,
+		xPos,
+		yPos,
+		xOffset: 1,
+		width: this.LIFT_WIDTH,
+		height: this.LIFT_HEIGHT,
 	}))
 }

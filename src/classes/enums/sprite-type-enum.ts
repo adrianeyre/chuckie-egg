@@ -3,10 +3,9 @@ enum StriteTypeEnum {
 	PLAYER = 1,
 	HEN = 2,
 	MOTHER_HEN = 3,
-	FLOOR = 4,
-	LADDER = 5,
-	LIFT_LEFT = 6,
-	LIFT_RIGHT = 7,
+	LIFT = 4,
+	FLOOR = 5,
+	LADDER = 6,
 	EGG = 8,
 	FOOD = 9,
 }

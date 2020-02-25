@@ -2,9 +2,9 @@ import ISpriteProps from './interfaces/sprite-props';
 import ISprite from './interfaces/sprite';
 import SpriteTypeEnum from './enums/sprite-type-enum';
 
-import block04 from '../images/block04.png';
+//import block04 from '../images/block04.png';
 import block05 from '../images/block05.png';
-//import block06 from '../images/block06.png';
+import block06 from '../images/block06.png';
 //import block07 from '../images/block07.png';
 import block08 from '../images/block08.png';
 import block09 from '../images/block09.png';
@@ -25,7 +25,7 @@ export default class Sprite implements ISprite {
 
 	private readonly Z_INDEX: number = 5000;
 	private readonly images = {
-		block04, block05, // block06, block07,
+		block05, block06, // block07,
 		block08, block09,
 	}
 

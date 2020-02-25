@@ -185,7 +185,7 @@ export default class Hen implements IHen {
 		if (isOnBlock && blocksAroundHen[DirectionEnum.FLOOR_LEFT] === SpriteTypeEnum.FOOD) return PlayerResultEnum.HEN_EATING;
 
 		if (
-			x < 0 ||
+			x < 1 ||
 			(isOnBlock && blocksAroundHen[DirectionEnum.DOWN_LEFT] === SpriteTypeEnum.BLANK) ||
 			(isOnBlock && blocksAroundHen[DirectionEnum.FLOOR_LEFT] === SpriteTypeEnum.FLOOR)
 		) {

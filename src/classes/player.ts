@@ -83,9 +83,15 @@ export default class Player implements IPlayer {
 		this.yPos = yPos;
 	}
 
+	public looseLife = (): number => {
+		this.direction = DirectionEnum.STAND;
+		return this.lives --;
+	}
+
 	private checkIfDirectionValid = (direction: DirectionEnum, x: number, y: number, blocksAroundPoint: any, isOnBlock: boolean): any => {
 		const blocksAroundPlayer = blocksAroundPoint(x, y);
-		let result = { validMove: false, outcome: [] }
+		const outcome: PlayerResultEnum[] = []
+		let result = { validMove: false, outcome }
 
 		switch (direction) {
 			case DirectionEnum.UP:
@@ -100,7 +106,11 @@ export default class Player implements IPlayer {
 				result = this.fall(x, y, blocksAroundPlayer); break;
 			case DirectionEnum.JUMP:
 				result = this.jump(x, y, blocksAroundPoint); break;
+			case DirectionEnum.LIFT_UP:
+				result = this.liftMove(y);
 		}
+		
+		if (blocksAroundPlayer[DirectionEnum.DOWN] === undefined) result.outcome.push(PlayerResultEnum.LOOSE_LIFE);
 
 		return result;
 	}
@@ -108,6 +118,7 @@ export default class Player implements IPlayer {
 	private updateValidMove = (): void => {
 		switch (this.direction) {
 			case DirectionEnum.UP:
+			case DirectionEnum.LIFT_UP:
 				this.y--; break;
 			case DirectionEnum.RIGHT:
 				this.x++; break;
@@ -210,6 +221,11 @@ export default class Player implements IPlayer {
 			this.isFalling = false;
 			return { validMove: false, outcome: [PlayerResultEnum.STOP_FALL_TIMER] }
 		}
+
+		return { validMove: true, outcome: [] }
+	}
+	private liftMove = (y: number): any => {
+		if (y < 1) return { validMove: false, outcome: [PlayerResultEnum.LOOSE_LIFE] }
 
 		return { validMove: true, outcome: [] }
 	}

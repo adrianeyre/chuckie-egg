@@ -20,4 +20,5 @@ export default interface IPlayer {
 	isJumping: boolean;
 	move(direction: DirectionEnum, blocksAroundPoint: any): PlayerResultEnum[];
 	setStart(x: number, y: number, xPos: number, yPos: number): void;
+	looseLife(): number;
 }

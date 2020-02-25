@@ -3,6 +3,7 @@ import React from 'react';
 import Game from '../../classes/game';
 import ISprite from '../../classes/interfaces/sprite';
 import IHen from '../../classes/interfaces/hen';
+import ILift from '../../classes/interfaces/lift';
 import IChuckieEggProps from './interfaces/chuckie-egg-props';
 import IChuckieEggState from './interfaces/chuckie-egg-state';
 import DrawSprite from '../draw-sprite/draw-sprite';
@@ -62,6 +63,8 @@ export default class ChuckieEgg extends React.Component<IChuckieEggProps, IChuck
 					{ this.state.game.board.sprites.map((sprite: ISprite) => <DrawSprite key={ sprite.key } onMouseOver={ this.onMouseOver } onContextMenu={ this.onContextMenu } onClick={ this.onClick } sprite={ sprite } height={ this.state.spriteHeight } width={ this.state.spriteWidth } containerWidth={ this.state.containerWidth } />) }
 
 					{ this.state.game.board.hens.map((sprite: IHen) => <DrawSprite key={ sprite.key } onMouseOver={ this.onMouseOver } onContextMenu={ this.onContextMenu } onClick={ this.onClick } sprite={ sprite } height={ this.state.spriteHeight } width={ this.state.spriteWidth } containerWidth={ this.state.containerWidth } />) }
+
+					{ this.state.game.board.lifts.map((sprite: ILift) => <DrawSprite key={ sprite.key } onMouseOver={ this.onMouseOver } onContextMenu={ this.onContextMenu } onClick={ this.onClick } sprite={ sprite } height={ this.state.spriteHeight } width={ this.state.spriteWidth } containerWidth={ this.state.containerWidth } />) }
 
 					<DrawSprite onMouseOver={ this.onMouseOver } onContextMenu={ this.onContextMenu } onClick={ this.onClick } sprite={ this.state.game.board.player } height={ this.state.spriteHeight } width={ this.state.spriteWidth } containerWidth={ this.state.containerWidth } />
 				</div>

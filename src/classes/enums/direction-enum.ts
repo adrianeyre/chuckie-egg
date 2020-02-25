@@ -15,6 +15,7 @@ enum DirectionEnum {
 	JUMP = 13,
 	EATING_RIGHT = 14,
 	EATING_LEFT = 15,
+	LIFT_UP = 16,
 }
 
 export default DirectionEnum;
