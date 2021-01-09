@@ -6,7 +6,13 @@ import 'react-app-polyfill/stable';
 import ChuckieEgg from './components/chuckie-egg/chuckie-egg';
 
 import './index.scss';
-import * as serviceWorker from './serviceWorker';
+import reportWebVitals from './reportWebVitals';
 
-ReactDOM.render(<ChuckieEgg />, document.getElementById('root'));
-serviceWorker.unregister();
+ReactDOM.render(
+    <React.StrictMode>
+        <ChuckieEgg />
+    </React.StrictMode>,
+    document.getElementById('root')
+);
+
+reportWebVitals();
