@@ -13,8 +13,11 @@ describe('Sprite', () => {
 			visable: true,
 			x: 10,
 			y: 10,
+			xPos: 1,
+			yPos: 1,
 			height: 1,
 			width: 1,
+			xOffset: 0,
 			imageIndex: 0,
 			type: SpriteTypeEnum.BLANK,
 		}

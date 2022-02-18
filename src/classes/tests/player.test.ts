@@ -13,8 +13,11 @@ describe('Player', () => {
 			visable: true,
 			x: 1,
 			y: 1,
+			xPos: 1,
+			yPos: 1,
 			height: 1,
 			width: 1,
+			xOffset: 0,
 		}
 
 		player = new Player(defaultConfig);
