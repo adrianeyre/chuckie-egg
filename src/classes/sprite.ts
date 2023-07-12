@@ -27,7 +27,7 @@ export default class Sprite implements ISprite {
 	private readonly images = {
 		block05, block06, // block07,
 		block08, block09,
-	}
+	} as any
 
 	constructor(config: ISpriteProps) {
 		this.key = config.key;

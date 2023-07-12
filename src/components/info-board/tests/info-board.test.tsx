@@ -1,4 +1,4 @@
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 
 import InfoBoard from '../info-board';
 import IInfoBoardProps from '../interfaces/info-board-props';
@@ -10,7 +10,7 @@ describe('Info Board', () => {
 			startGame: jest.fn(),
 		};
 
-		const infoBoard = shallow(<InfoBoard {...defaultProps} />);
+		const infoBoard = render(<InfoBoard {...defaultProps} />);
 		expect(infoBoard).toMatchSnapshot();
 	});
 });

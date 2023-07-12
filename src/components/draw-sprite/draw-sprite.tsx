@@ -35,7 +35,7 @@ const DrawSprite: FC<IDrawSpriteProps> = (props: IDrawSpriteProps) => {
         runUpdateOffSets();
     }, []);
 
-	if (!props.sprite.visable) return <div></div>
+	if (!props.sprite.visable) return <></>
 
 	return <div key={ props.sprite.key } style={ styleSprite(props.sprite.x, props.sprite.y) }>
 		<img

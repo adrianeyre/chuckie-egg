@@ -13,4 +13,5 @@ export default interface IBlockPosition {
 	[DirectionEnum.UP_LEFT]: SpriteTypeEnum;
 	[DirectionEnum.FLOOR_RIGHT]: SpriteTypeEnum;
 	[DirectionEnum.FLOOR_LEFT]: SpriteTypeEnum;
+	[DirectionEnum.HEAD]: undefined;
 }

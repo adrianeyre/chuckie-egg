@@ -33,7 +33,7 @@ export default class Player implements IPlayer {
 	private readonly DEFAULT_FOOD_SCORE: number = 10;
 	private imageIteration: number = 0;
 	private jumpIteration: number = 0;
-	private images = playerImagesData.default;
+	private images = playerImagesData.default as any;
 	private jumpMatrix: IJumpMatrix = jumpMatrixData.default;
 
 	constructor(config: IPlayerConfig) {

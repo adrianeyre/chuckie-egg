@@ -22,7 +22,7 @@ export default class Hen implements IHen {
 	public direction: DirectionEnum;
 
 	private readonly Z_INDEX: number = 5000;
-	private readonly images = henImagesData.default;
+	private readonly images = henImagesData.default as any;
 	private imageIteration: number = 0;
 	private originalWidth: number = 1;
 

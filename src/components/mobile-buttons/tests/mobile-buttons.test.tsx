@@ -1,4 +1,4 @@
-import { shallow } from 'enzyme';
+import { render } from '@testing-library/react';
 
 import MobileButtons from '../mobile-buttons';
 import IMobileButtonsProps from '../interfaces/mobile-buttons-props';
@@ -9,7 +9,7 @@ describe('Info Board', () => {
 			handleMobileButton: jest.fn(),
 		};
 
-		const infoBoard = shallow(<MobileButtons {...defaultProps} />);
+		const infoBoard = render(<MobileButtons {...defaultProps} />);
 		expect(infoBoard).toMatchSnapshot();
 	});
 });
