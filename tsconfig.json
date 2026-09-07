@@ -1,44 +1,30 @@
 {
-  "compilerOptions": {
-    "baseUrl": "src",
-    "outDir": "build/dist/chuckie-egg",
-    "module": "esnext",
-    "target": "es5",
-    "lib": [
-      "es6",
-      "esnext.asynciterable",
-      "dom"
-    ],
-    "sourceMap": true,
-    "allowJs": true,
-    "jsx": "react-jsx",
-    "moduleResolution": "node",
-    "rootDir": "src",
-    "forceConsistentCasingInFileNames": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noImplicitAny": true,
-    "strictNullChecks": true,
-    "noUnusedLocals": true,
-    "allowSyntheticDefaultImports": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "strict": true,
-    "resolveJsonModule": true,
-    "noEmit": true,
-    "isolatedModules": true,
-    "noFallthroughCasesInSwitch": true
-  },
-  "exclude": [
-    "node_modules",
-    "build",
-    "scripts",
-    "acceptance-tests",
-    "webpack",
-    "jest",
-    "src/enzyme/setup.ts"
-  ],
-  "include": [
-    "src/**/*"
-  ]
+	"compilerOptions": {
+		"target": "ES2022",
+		"lib": ["ES2022", "DOM", "DOM.Iterable"],
+		"module": "ESNext",
+		"moduleResolution": "bundler",
+		"types": ["vite/client", "node", "vitest/globals"],
+		"jsx": "react-jsx",
+		"strict": true,
+		"noImplicitOverride": true,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"forceConsistentCasingInFileNames": true,
+		"isolatedModules": true,
+		"esModuleInterop": true,
+		"allowSyntheticDefaultImports": true,
+		"skipLibCheck": true,
+		"resolveJsonModule": true,
+		"noEmit": true,
+		"sourceMap": true,
+		"paths": {
+			"classes/*": ["./src/classes/*"],
+			"components/*": ["./src/components/*"],
+			"services/*": ["./src/services/*"]
+		}
+	},
+	"include": ["src", "vite.config.ts", "vitest.config.ts", "eslint.config.js"]
 }
