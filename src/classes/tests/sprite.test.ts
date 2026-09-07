@@ -4,7 +4,7 @@ import ISpriteProps from '../interfaces/sprite-props';
 import ISprite from '../interfaces/sprite';
 
 describe('Sprite', () => {
-	let defaultConfig: ISpriteProps
+	let defaultConfig: ISpriteProps;
 	let sprite: ISprite;
 
 	beforeEach(() => {
@@ -20,10 +20,10 @@ describe('Sprite', () => {
 			xOffset: 0,
 			imageIndex: 0,
 			type: SpriteTypeEnum.BLANK,
-		}
+		};
 
 		sprite = new Sprite(defaultConfig);
-	})
+	});
 
 	it('Should create Sprite class', () => {
 		expect(sprite.key).toEqual('sprite');

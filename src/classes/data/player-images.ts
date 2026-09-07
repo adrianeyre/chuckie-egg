@@ -22,6 +22,6 @@ const playerImages = {
 	[DirectionEnum.FLOOR_LEFT]: [],
 	[DirectionEnum.FALL_DOWN]: [playerRightStood],
 	[DirectionEnum.JUMP]: [],
-}
+};
 
 export default playerImages;

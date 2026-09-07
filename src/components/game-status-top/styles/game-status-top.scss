@@ -1,4 +1,4 @@
-@import '../../default-styles/colours.scss';
+@use '../../default-styles/colours' as *;
 
 .game-status-top {
 	margin-top: 1em;
@@ -38,7 +38,7 @@
 		text-align: right;
 		width: 24%;
 	}
-	
+
 	.game-status-right {
 		text-align: right;
 		float: right;

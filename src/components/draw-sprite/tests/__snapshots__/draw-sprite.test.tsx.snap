@@ -1,17 +1,17 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Draw Sprite Should render correctly 1`] = `
-Object {
+exports[`Draw Sprite > Should render correctly 1`] = `
+{
   "asFragment": [Function],
   "baseElement": <body>
     <div>
       <div
-        style="width: 0px; height: 0px; opacity: 1; transform: translate3d(0px, 0px, 0); z-index: 5000;"
+        style="width: 0px; height: 0px; opacity: 1; -webkit-transform: translate3d(0px, 0px, 0); transform: translate3d(0px, 0px, 0); z-index: 5000;"
       >
         <img
           alt="sprite"
           height="1"
-          src="player-right-stood.png"
+          src="/src/images/player-right-stood.png"
           width="1"
         />
       </div>
@@ -19,12 +19,12 @@ Object {
   </body>,
   "container": <div>
     <div
-      style="width: 0px; height: 0px; opacity: 1; transform: translate3d(0px, 0px, 0); z-index: 5000;"
+      style="width: 0px; height: 0px; opacity: 1; -webkit-transform: translate3d(0px, 0px, 0); transform: translate3d(0px, 0px, 0); z-index: 5000;"
     >
       <img
         alt="sprite"
         height="1"
-        src="player-right-stood.png"
+        src="/src/images/player-right-stood.png"
         width="1"
       />
     </div>

@@ -1,18 +1,19 @@
-import React from 'react';
-import ReactDOM from 'react-dom';
-import 'react-app-polyfill/ie11';
-import 'react-app-polyfill/stable';
+import { StrictMode } from 'react';
+import { createRoot } from 'react-dom/client';
 
 import ChuckieEgg from './components/chuckie-egg/chuckie-egg';
 
 import './index.scss';
-import reportWebVitals from './reportWebVitals';
 
-ReactDOM.render(
-    <React.StrictMode>
-        <ChuckieEgg />
-    </React.StrictMode>,
-    document.getElementById('root')
+// `ReactDOM.render` was removed in React 19; `createRoot` is the replacement.
+// The Create React App polyfills that used to be imported here went with it —
+// the build now targets ES2022, which no version of IE ever reached.
+const container = document.getElementById('root');
+
+if (!container) throw new Error('Cannot start Chuckie Egg: no #root element in the document.');
+
+createRoot(container).render(
+	<StrictMode>
+		<ChuckieEgg />
+	</StrictMode>,
 );
-
-reportWebVitals();

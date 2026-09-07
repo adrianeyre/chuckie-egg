@@ -1,4 +1,4 @@
-@import '../../default-styles/colours.scss';
+@use '../../default-styles/colours' as *;
 
 .info-board {
 	position: absolute;

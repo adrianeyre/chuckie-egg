@@ -7,7 +7,7 @@ describe('Info Board', () => {
 	it('Should render correctly', () => {
 		const defaultProps: IInfoBoardProps = {
 			containerHeight: 1000,
-			startGame: jest.fn(),
+			startGame: vi.fn(),
 		};
 
 		const infoBoard = render(<InfoBoard {...defaultProps} />);

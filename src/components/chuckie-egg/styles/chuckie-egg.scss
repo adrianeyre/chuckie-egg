@@ -1,5 +1,4 @@
-@import url(https://fonts.googleapis.com/css?family=Press+Start+2P&display=swap);
-@import '../../default-styles/colours.scss';
+@use '../../default-styles/colours' as *;
 
 .chuckie-egg-play-container {
 	width: 100%;

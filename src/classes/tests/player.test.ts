@@ -4,7 +4,7 @@ import IPlayer from '../interfaces/player';
 import DirectionEnum from '../enums/direction-enum';
 
 describe('Player', () => {
-	let defaultConfig: IPlayerProps
+	let defaultConfig: IPlayerProps;
 	let player: IPlayer;
 
 	beforeEach(() => {
@@ -18,10 +18,10 @@ describe('Player', () => {
 			height: 1,
 			width: 1,
 			xOffset: 0,
-		}
+		};
 
 		player = new Player(defaultConfig);
-	})
+	});
 
 	it('Should create Player class', () => {
 		expect(player.key).toEqual('player');

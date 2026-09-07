@@ -10,7 +10,7 @@ export default interface ISprite {
 	width: number;
 	height: number;
 	xOffset: number;
-	zIndex: number
+	zIndex: number;
 	image: string;
 	type: SpriteTypeEnum;
 }
