@@ -25,9 +25,11 @@ export default class Sprite implements ISprite {
 
 	private readonly Z_INDEX: number = 5000;
 	private readonly images = {
-		block05, block06, // block07,
-		block08, block09,
-	} as any
+		block05,
+		block06, // block07,
+		block08,
+		block09,
+	} as any;
 
 	constructor(config: ISpriteProps) {
 		this.key = config.key;
@@ -44,5 +46,5 @@ export default class Sprite implements ISprite {
 		this.type = config.type;
 	}
 
-	private imageName = (index: number): string => `block${ index.toString().length < 2 ? '0' : ''}${ index }`;
+	private imageName = (index: number): string => `block${index.toString().length < 2 ? '0' : ''}${index}`;
 }

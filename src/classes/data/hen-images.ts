@@ -19,6 +19,6 @@ const henImages = {
 	[DirectionEnum.LEFT]: [henLeftStood, henLeft],
 	[DirectionEnum.EATING_RIGHT]: [henRightEat1, henRightEat2, henRightEat1],
 	[DirectionEnum.EATING_LEFT]: [henLeftEat1, henLeftEat2, henLeftEat1],
-}
+};
 
 export default henImages;

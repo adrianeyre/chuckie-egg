@@ -12,7 +12,7 @@ export default interface IPlayer {
 	width: number;
 	xOffset: number;
 	image: string;
-	zIndex: number
+	zIndex: number;
 	direction: DirectionEnum;
 	score: number;
 	lives: number;

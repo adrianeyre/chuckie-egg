@@ -36,17 +36,14 @@ export default class Lift implements ILift {
 	public move = (playerX: number, playerY: number, boardHeight: number): PlayerResultEnum[] => {
 		const result = [PlayerResultEnum.SAFE];
 
-		if (
-			this.xPos >= playerX &&
-			this.xPos <= playerX + (this.width / 2) &&
-			this.yPos - 2 === playerY
-		) result.push(PlayerResultEnum.LIFT_MOVE_PLAYER)
+		if (this.xPos >= playerX && this.xPos <= playerX + this.width / 2 && this.yPos - 2 === playerY)
+			result.push(PlayerResultEnum.LIFT_MOVE_PLAYER);
 
-		this.y --;
+		this.y--;
 		if (this.y < 0) this.y = boardHeight;
 
 		this.yPos = this.y - 1;
 
 		return result;
-	}
+	};
 }

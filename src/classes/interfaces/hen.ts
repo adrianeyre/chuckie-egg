@@ -11,7 +11,7 @@ export default interface IHen {
 	width: number;
 	height: number;
 	xOffset: number;
-	zIndex: number
+	zIndex: number;
 	image: string;
 	direction: DirectionEnum;
 	move(blocksAroundPoint: any): PlayerResultEnum[];
