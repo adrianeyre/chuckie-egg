@@ -1,7 +1,7 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`Battle Ships Should render correctly 1`] = `
-Object {
+exports[`Battle Ships > Should render correctly 1`] = `
+{
   "asFragment": [Function],
   "baseElement": <body>
     <div>
@@ -18,7 +18,7 @@ Object {
           >
             <img
               alt="player"
-              src="player-right.png"
+              src="/src/images/player-right.png"
             />
             <span
               class="header-text"
@@ -27,7 +27,7 @@ Object {
             </span>
             <img
               alt="player"
-              src="player-left.png"
+              src="/src/images/player-left.png"
             />
           </div>
           <div
@@ -120,7 +120,7 @@ Object {
         >
           <img
             alt="player"
-            src="player-right.png"
+            src="/src/images/player-right.png"
           />
           <span
             class="header-text"
@@ -129,7 +129,7 @@ Object {
           </span>
           <img
             alt="player"
-            src="player-left.png"
+            src="/src/images/player-left.png"
           />
         </div>
         <div
