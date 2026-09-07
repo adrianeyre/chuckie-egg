@@ -50,6 +50,12 @@ which reads the conventional-commit messages since the last tag, works out the n
 `CHANGELOG.md`, tags the commit and publishes a GitHub release. The bumped tree is then built and
 deployed to GitHub Pages, so the published site is always the version that was just released.
 
+`conventional-changelog-conventionalcommits` is held at `9.x` on purpose. Its `10.x` templates need
+`conventional-changelog-writer@9`, and the newest `@semantic-release/release-notes-generator` and
+`@semantic-release/commit-analyzer` still depend on `conventional-changelog-writer@8`, so pairing
+the two majors makes the release fail while rendering the notes. Move the preset to `10.x` only
+once those plugins ship with writer 9.
+
 ## <a name="Play">Play Chuckie Egg</a>
 
 - [Chuckie Egg](https://adrianeyre.github.io/chuckie-egg/)
